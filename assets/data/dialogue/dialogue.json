@@ -1,0 +1,195 @@
+{
+  "bug_phantom": {
+    "discovery": [
+      "Oh, look who found my little bug lab!",
+      "Another debugger? You'll never squash ALL my bugs!",
+      "Welcome to my domain... mind the segfaults!"
+    ],
+    "encounter_intro": [
+      "Ready to crash? Let's see how you handle my exceptions!",
+      "I've got bugs you haven't even imagined yet!"
+    ],
+    "combat_taunt": [
+      "That wasn't a bug, that was a FEATURE!",
+      "NullPointerException... in YOUR health bar!",
+      "Try debugging THIS!",
+      "404: Your attack not found!",
+      "Have you tried turning yourself off and on again?"
+    ],
+    "special_attack": [
+      "Deploying decoy instances!",
+      "Catch the real one... if you can!"
+    ],
+    "low_health": [
+      "Critical error detected... in MY code?!",
+      "This wasn't in the test cases!"
+    ],
+    "victory": [
+      "Bug report: RESOLVED. You're the bug now!"
+    ],
+    "defeat": [
+      "Stack overflow... I'm going down...",
+      "You actually... debugged me? Impressive."
+    ]
+  },
+  "captain_deadline": {
+    "discovery": [
+      "Your time is up! I've been expecting you!",
+      "Another one who can't meet their deadlines?"
+    ],
+    "encounter_intro": [
+      "Your time is up. Let's see what you've got!",
+      "This meeting just became a BATTLE meeting!"
+    ],
+    "combat_taunt": [
+      "You're BEHIND SCHEDULE!",
+      "I'll finish you before the sprint ends!",
+      "Tick tock, your health is running out!",
+      "Consider this your FINAL review!",
+      "No extensions for you!"
+    ],
+    "special_attack": [
+      "CRUNCH TIME!",
+      "Feel the weight of a thousand deadlines!"
+    ],
+    "low_health": [
+      "I... might need to push this deadline...",
+      "Requesting scope reduction!"
+    ],
+    "victory": [
+      "Delivered on time, under budget. YOU'RE the cost."
+    ],
+    "defeat": [
+      "The deadline... has been... extended...",
+      "Fine! You win this sprint. The next one is mine!"
+    ]
+  },
+  "firewall_guardian": {
+    "discovery": [
+      "Unauthorized access detected. State your purpose.",
+      "You've triggered a security alert."
+    ],
+    "encounter_intro": [
+      "Access denied. Only authorized personnel beyond this point.",
+      "Your credentials have been revoked. Prepare for removal."
+    ],
+    "combat_taunt": [
+      "Access denied. Try getting through this!",
+      "Firewall rules updated: BLOCK ALL.",
+      "Your packets are being dropped.",
+      "Permission denied. Again.",
+      "I AM the security policy."
+    ],
+    "special_attack": [
+      "Activating deep packet inspection!",
+      "Shield protocol engaged!"
+    ],
+    "low_health": [
+      "Breach detected... reinforcing defenses...",
+      "Security log: multiple intrusion attempts..."
+    ],
+    "victory": [
+      "Access permanently revoked. Security incident logged."
+    ],
+    "defeat": [
+      "Firewall... breached. System compromised...",
+      "You've passed the security audit. Well played."
+    ]
+  },
+  "lag_lord": {
+    "discovery": [
+      "Did you see me? Of course not, I was already gone!",
+      "You're too slow to even find me... oh wait, you did."
+    ],
+    "encounter_intro": [
+      "Catch me if your frame rate can!",
+      "I move at 240fps while you're stuck at 15!"
+    ],
+    "combat_taunt": [
+      "Too... slow...",
+      "Was that supposed to hit me?",
+      "Your reaction time needs a firmware update!",
+      "Buffering... buffering... you're buffering!",
+      "I've already dodged that three times!"
+    ],
+    "special_attack": [
+      "MAXIMUM VELOCITY!",
+      "Ping: 0ms. Catch THIS!"
+    ],
+    "low_health": [
+      "Connection... unstable...",
+      "My speed... it's dropping..."
+    ],
+    "victory": [
+      "Speed kills. And you're evidence."
+    ],
+    "defeat": [
+      "Lag... spike... fatal...",
+      "You actually caught me? Must be a good connection."
+    ]
+  },
+  "dark_designer": {
+    "discovery": [
+      "Ah, a new canvas for my masterwork of destruction!",
+      "The composition of this scene demands a battle!"
+    ],
+    "encounter_intro": [
+      "Let me redesign your face!",
+      "I'll make you pixel-perfect... in defeat!"
+    ],
+    "combat_taunt": [
+      "That was not in the design specification!",
+      "Your color scheme clashes with my vision!",
+      "Let me adjust your contrast... permanently!",
+      "Needs more whitespace... between you and consciousness!",
+      "I'll kern you into oblivion!"
+    ],
+    "special_attack": [
+      "Deploying dark patterns!",
+      "Feel the power of bad UX!"
+    ],
+    "low_health": [
+      "This design... needs revision...",
+      "Ctrl+Z! CTRL+Z!"
+    ],
+    "victory": [
+      "Another design critique... that you failed."
+    ],
+    "defeat": [
+      "My masterpiece... destroyed...",
+      "Fine. Your design sense wins this round."
+    ]
+  },
+  "chaos_manager": {
+    "discovery": [
+      "Welcome to the standup meeting... of DOOM!",
+      "I've been tracking your velocity. It's about to drop."
+    ],
+    "encounter_intro": [
+      "Let's have a quick sync about your DESTRUCTION!",
+      "This is a mandatory all-hands... combat!"
+    ],
+    "combat_taunt": [
+      "Let's circle back to your health points!",
+      "I'm going to table this... on your face!",
+      "Action item: defeat the hero. Status: IN PROGRESS!",
+      "Per my last attack...",
+      "Let me put a pin in your health bar!"
+    ],
+    "special_attack": [
+      "Activating team synergy!",
+      "Deploying cross-functional support!"
+    ],
+    "low_health": [
+      "Escalating to management...",
+      "Need to restructure my approach..."
+    ],
+    "victory": [
+      "Meeting concluded. Result: your termination."
+    ],
+    "defeat": [
+      "Fine! You win this sprint. The next one is mine!",
+      "Project... cancelled... position... eliminated..."
+    ]
+  }
+}

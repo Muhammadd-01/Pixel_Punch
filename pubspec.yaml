@@ -1,0 +1,57 @@
+name: pixel_punch
+description: "PixelPunch - Your Zone. Your Rivals. Your Victory."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.9.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Game Engine
+  flame: ^1.22.0
+  flame_audio: ^2.10.0
+
+  # State Management
+  provider: ^6.1.2
+
+  # Navigation
+  go_router: ^14.6.2
+
+  # Local Storage
+  shared_preferences: ^2.3.4
+  sqflite: ^2.4.1
+  path: ^1.9.1
+
+  # Backend
+  supabase_flutter: ^2.8.2
+
+  # Utilities
+  uuid: ^4.5.1
+  equatable: ^2.0.7
+  intl: ^0.19.0
+  collection: ^1.19.1
+
+  # UI
+  cupertino_icons: ^1.0.8
+  google_fonts: ^6.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/data/
+    - assets/data/characters/
+    - assets/data/villains/
+    - assets/data/zones/
+    - assets/data/dialogue/
+    - assets/data/abilities/
+    - assets/branding/

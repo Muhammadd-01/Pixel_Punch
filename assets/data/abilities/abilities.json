@@ -1,0 +1,74 @@
+[
+  {
+    "id": "charged_strike",
+    "name": "Charged Strike",
+    "description": "Channel energy for a devastating strike dealing 2x damage.",
+    "archetype": "balanced",
+    "damageMultiplier": 2.0,
+    "range": 55.0,
+    "duration": 0.0,
+    "cooldown": 5.0,
+    "healAmount": 0,
+    "type": "damage"
+  },
+  {
+    "id": "protective_shield",
+    "name": "Protective Shield",
+    "description": "Create a temporary shield that blocks incoming damage for 3 seconds.",
+    "archetype": "tank",
+    "damageMultiplier": 0.0,
+    "range": 0.0,
+    "duration": 3.0,
+    "cooldown": 8.0,
+    "healAmount": 0,
+    "type": "shield"
+  },
+  {
+    "id": "rapid_dash",
+    "name": "Rapid Dash",
+    "description": "Dash forward at extreme speed, dealing damage to enemies in your path.",
+    "archetype": "speedster",
+    "damageMultiplier": 1.5,
+    "range": 120.0,
+    "duration": 0.3,
+    "cooldown": 3.0,
+    "healAmount": 0,
+    "type": "dash"
+  },
+  {
+    "id": "ground_slam",
+    "name": "Ground Slam",
+    "description": "Slam the ground, dealing massive area damage and knocking back enemies.",
+    "archetype": "heavy_hitter",
+    "damageMultiplier": 2.5,
+    "range": 80.0,
+    "duration": 0.5,
+    "cooldown": 7.0,
+    "healAmount": 0,
+    "type": "area_damage"
+  },
+  {
+    "id": "team_recovery",
+    "name": "Team Recovery",
+    "description": "Heal all nearby allies for 20 health points.",
+    "archetype": "support",
+    "damageMultiplier": 0.0,
+    "range": 100.0,
+    "duration": 0.0,
+    "cooldown": 10.0,
+    "healAmount": 20,
+    "type": "heal"
+  },
+  {
+    "id": "evasive_burst",
+    "name": "Evasive Burst",
+    "description": "Become briefly invulnerable and teleport a short distance.",
+    "archetype": "trickster",
+    "damageMultiplier": 0.0,
+    "range": 80.0,
+    "duration": 0.5,
+    "cooldown": 4.0,
+    "healAmount": 0,
+    "type": "evasion"
+  }
+]

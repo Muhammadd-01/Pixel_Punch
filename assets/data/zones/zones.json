@@ -1,0 +1,84 @@
+[
+  {
+    "id": "zone_office",
+    "name": "NexoVate Office District",
+    "description": "A stylized cartoon office environment. Navigate through reception, open floors, meeting rooms, and the mysterious server room.",
+    "theme": "office",
+    "unlocked": true,
+    "unlockRequirement": null,
+    "recommendedDifficulty": "Easy",
+    "width": 1600.0,
+    "height": 1200.0,
+    "backgroundColor": "0xFFE8E0D4",
+    "villainIds": ["villain_bug_phantom", "villain_captain_deadline"],
+    "locations": [
+      {"name": "Reception", "x": 100.0, "y": 600.0, "width": 200.0, "height": 150.0},
+      {"name": "Open Office", "x": 400.0, "y": 400.0, "width": 300.0, "height": 300.0},
+      {"name": "Meeting Room", "x": 800.0, "y": 200.0, "width": 200.0, "height": 150.0},
+      {"name": "Creative Dept", "x": 1100.0, "y": 400.0, "width": 250.0, "height": 200.0},
+      {"name": "Server Room", "x": 1200.0, "y": 800.0, "width": 250.0, "height": 200.0}
+    ],
+    "obstacles": [
+      {"type": "desk", "x": 450.0, "y": 450.0, "width": 60.0, "height": 40.0},
+      {"type": "desk", "x": 550.0, "y": 450.0, "width": 60.0, "height": 40.0},
+      {"type": "desk", "x": 450.0, "y": 550.0, "width": 60.0, "height": 40.0},
+      {"type": "desk", "x": 550.0, "y": 550.0, "width": 60.0, "height": 40.0},
+      {"type": "wall", "x": 790.0, "y": 190.0, "width": 10.0, "height": 170.0},
+      {"type": "wall", "x": 790.0, "y": 190.0, "width": 220.0, "height": 10.0},
+      {"type": "server_rack", "x": 1250.0, "y": 850.0, "width": 40.0, "height": 60.0},
+      {"type": "server_rack", "x": 1350.0, "y": 850.0, "width": 40.0, "height": 60.0},
+      {"type": "whiteboard", "x": 850.0, "y": 195.0, "width": 80.0, "height": 10.0}
+    ],
+    "playerSpawn": {"x": 150.0, "y": 650.0}
+  },
+  {
+    "id": "zone_neon",
+    "name": "Neon Battle District",
+    "description": "A colorful futuristic training district with neon signs, glowing platforms, and combat challenge areas.",
+    "theme": "neon",
+    "unlocked": false,
+    "unlockRequirement": "Complete Zone 1",
+    "recommendedDifficulty": "Medium",
+    "width": 1600.0,
+    "height": 1200.0,
+    "backgroundColor": "0xFF1A1A2E",
+    "villainIds": ["villain_firewall_guardian", "villain_lag_lord"],
+    "locations": [
+      {"name": "Neon Gateway", "x": 100.0, "y": 600.0, "width": 200.0, "height": 150.0},
+      {"name": "Training Arena", "x": 500.0, "y": 400.0, "width": 300.0, "height": 300.0},
+      {"name": "Speed Track", "x": 900.0, "y": 300.0, "width": 400.0, "height": 100.0},
+      {"name": "Glow Platform", "x": 1100.0, "y": 600.0, "width": 200.0, "height": 200.0}
+    ],
+    "obstacles": [
+      {"type": "platform", "x": 550.0, "y": 500.0, "width": 80.0, "height": 20.0},
+      {"type": "platform", "x": 700.0, "y": 400.0, "width": 80.0, "height": 20.0},
+      {"type": "barrier", "x": 950.0, "y": 350.0, "width": 20.0, "height": 100.0}
+    ],
+    "playerSpawn": {"x": 150.0, "y": 650.0}
+  },
+  {
+    "id": "zone_rooftop",
+    "name": "Pixel Rooftop",
+    "description": "A bright cartoon rooftop above a stylized city. Features platforms, vents, and a dramatic boss arena.",
+    "theme": "rooftop",
+    "unlocked": false,
+    "unlockRequirement": "Complete Zone 2",
+    "recommendedDifficulty": "Hard",
+    "width": 1600.0,
+    "height": 1200.0,
+    "backgroundColor": "0xFF87CEEB",
+    "villainIds": ["villain_dark_designer", "villain_chaos_manager"],
+    "locations": [
+      {"name": "Stairway Exit", "x": 100.0, "y": 800.0, "width": 150.0, "height": 150.0},
+      {"name": "Vent Corridor", "x": 400.0, "y": 600.0, "width": 300.0, "height": 100.0},
+      {"name": "Skyline Lookout", "x": 800.0, "y": 300.0, "width": 200.0, "height": 150.0},
+      {"name": "Boss Arena", "x": 1100.0, "y": 500.0, "width": 350.0, "height": 350.0}
+    ],
+    "obstacles": [
+      {"type": "vent", "x": 450.0, "y": 620.0, "width": 50.0, "height": 50.0},
+      {"type": "vent", "x": 600.0, "y": 620.0, "width": 50.0, "height": 50.0},
+      {"type": "railing", "x": 800.0, "y": 290.0, "width": 200.0, "height": 10.0}
+    ],
+    "playerSpawn": {"x": 150.0, "y": 850.0}
+  }
+]
