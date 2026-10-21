@@ -11,6 +11,7 @@ Explore corporate-themed cartoon districts, track down eccentric fictional workp
 ## 🎮 Core Features
 
 - **2D Elevated Arena & Exploration**: Smooth top-down exploration with virtual joystick controls, boundary collisions, environmental obstacles, and dynamic camera tracking.
+- **Villain Lab (Face → 2D Villain)**: Take a selfie or pick a photo and PixelPunch turns the face into a playable cartoon villain. On-device ML Kit finds the face and eyes, the photo is cel-shaded and ink-outlined into a round cartoon portrait, and the face's features (smile, face shape, contrast, skin/hair colours) pick the villain's fighting style, stats, colour scheme and trash talk. Forged villains get devil horns, angry brows and a cape, spawn in the zone you choose and can be fought in Solo/Duo/Squad. Photos never leave the device.
 - **Fictional Company Villains**: Encounter fictional villains inspired by workplace humor (The Bug Phantom, Captain Deadline, Firewall Guardian, Lag Lord, Dark Designer, and Chaos Manager).
 - **Living Dialogue System**: Contextual on-screen dialogue with typewriter animations, portrait popups, reaction taunts, low-health lines, and discovery announcements.
 - **Dynamic Combat Mechanics**: Real-time hitboxes, attack ranges, cooldown meters, defense calculation, knockback impulse, temporary invulnerability, and dodge mechanics.
@@ -63,6 +64,18 @@ flutter run
 
 ---
 
+## 🎯 Controls
+
+| Touch | Keyboard (web/desktop) | Action |
+|---|---|---|
+| Floating joystick (left half of screen) | WASD / Arrow keys | Move |
+| Punch (hold to keep punching) | J / Space | Basic attack |
+| Special (shows cooldown ring) | K | Hero special ability |
+| Dodge | L / Shift | Invulnerable dash (0.7s cooldown) |
+| Pause button / Back | Esc / P | Pause menu |
+
+---
+
 ## 📂 Project Architecture
 
 ```
@@ -80,16 +93,20 @@ lib/
 │   ├── profile/          # Career stats, win/loss records, cloud status
 │   ├── settings/         # Audio sliders, controls, reduced motion
 │   ├── splash/           # Branded logo reveal & async initialization
+│   ├── villain_lab/      # Face → cartoon villain forge, roster & fight launcher
 │   └── zones/            # Zone selection carousel, preview & stats
 ├── game/
 │   ├── ai/               # Finite-state machine AI (approach, attack, retreat)
 │   ├── combat/           # Combat manager, taunt timers, damage resolution
 │   ├── components/       # Flame components (Player, Villain, Zone, FighterBase)
 │   ├── dialogue/         # Dialogue manager, cooldown pools
-│   ├── models/           # FighterData, ZoneData, AbilityData, DialogueProfile
+│   ├── models/           # FighterData, ZoneData, AbilityData, DialogueProfile, CustomVillain
+│   ├── render/           # Procedural 2D character painter (heroes, villains, photo faces)
 │   └── pixel_punch_game.dart # Main Flame game loop
 └── services/
     ├── audio_service.dart          # Audio controls and SFX/BGM fallbacks
+    ├── custom_villain_service.dart # Saved face-generated villains
+    ├── face_villain/               # ML Kit face detection, cartoonizer, villain generator
     ├── game_state_service.dart     # Central data loader & progression provider
     ├── local_storage_service.dart  # Offline persistence (SharedPreferences)
     ├── supabase_service.dart       # Supabase Auth & PostgreSQL client

@@ -1,10 +1,12 @@
+import 'dart:math';
 import '../pixel_punch_game.dart';
 
-/// Manages combat state, turn logic, and periodic villain taunts.
+/// Manages combat pacing: periodic villain taunts shown as speech bubbles.
 class CombatManager {
   final PixelPunchGame game;
   double _tauntTimer = 0;
-  static const double _tauntInterval = 10.0;
+  static const double _tauntInterval = 7.0;
+  final Random _random = Random();
 
   CombatManager({required this.game});
 
@@ -19,12 +21,10 @@ class CombatManager {
   }
 
   void _triggerRandomTaunt() {
-    final aliveVillains =
-        game.villainComponents.where((v) => !v.isKnockedOut).toList();
-    if (aliveVillains.isEmpty) return;
-
-    final villain =
-        aliveVillains[DateTime.now().millisecondsSinceEpoch % aliveVillains.length];
-    villain.tryCombatTaunt();
+    final active = game.villainComponents
+        .where((v) => !v.isKnockedOut && v.isInCombat)
+        .toList();
+    if (active.isEmpty) return;
+    active[_random.nextInt(active.length)].tryCombatTaunt();
   }
 }

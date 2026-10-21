@@ -79,7 +79,15 @@ class HomeScreen extends StatelessWidget {
             () => _showModeSelection(context),
             isLarge: true,
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
+          _btn(
+            context,
+            Icons.face_retouching_natural,
+            'VILLAIN LAB',
+            const Color(0xFFE040FB),
+            () => context.push('/villain-lab'),
+          ),
+          const SizedBox(height: 12),
 
           // Secondary Navigation Grid (2 x 2)
           Row(
@@ -247,6 +255,14 @@ class HomeScreen extends StatelessWidget {
             AppColors.primary,
             () => _showModeSelection(context),
             isLarge: true,
+          ),
+          const SizedBox(height: 12),
+          _btn(
+            context,
+            Icons.face_retouching_natural,
+            'VILLAIN LAB',
+            const Color(0xFFE040FB),
+            () => context.push('/villain-lab'),
           ),
           const SizedBox(height: 12),
           Row(

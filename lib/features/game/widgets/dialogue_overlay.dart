@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 class DialogueOverlay extends StatefulWidget {
@@ -6,6 +7,7 @@ class DialogueOverlay extends StatefulWidget {
   final String villainTitle;
   final String text;
   final Color color;
+  final Uint8List? portrait;
   final VoidCallback onDismiss;
 
   const DialogueOverlay({
@@ -14,6 +16,7 @@ class DialogueOverlay extends StatefulWidget {
     required this.villainTitle,
     required this.text,
     required this.color,
+    this.portrait,
     required this.onDismiss,
   });
 
@@ -34,20 +37,19 @@ class _DialogueOverlayState extends State<DialogueOverlay> {
   }
 
   void _startTypewriter() {
-    _typewriterTimer = Timer.periodic(
-      const Duration(milliseconds: 25),
-      (timer) {
-        if (_charIndex < widget.text.length) {
-          setState(() {
-            _charIndex++;
-            _displayedText = widget.text.substring(0, _charIndex);
-          });
-        } else {
-          timer.cancel();
-          setState(() => _isComplete = true);
-        }
-      },
-    );
+    _typewriterTimer = Timer.periodic(const Duration(milliseconds: 25), (
+      timer,
+    ) {
+      if (_charIndex < widget.text.length) {
+        setState(() {
+          _charIndex++;
+          _displayedText = widget.text.substring(0, _charIndex);
+        });
+      } else {
+        timer.cancel();
+        setState(() => _isComplete = true);
+      }
+    });
   }
 
   void _skipTypewriter() {
@@ -94,23 +96,32 @@ class _DialogueOverlayState extends State<DialogueOverlay> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 54,
-                height: 54,
+                width: 64,
+                height: 64,
                 decoration: BoxDecoration(
                   color: widget.color.withValues(alpha: 0.25),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: widget.color, width: 2),
                 ),
-                child: Center(
-                  child: Text(
-                    widget.villainName.isNotEmpty ? widget.villainName[0] : '?',
-                    style: TextStyle(
-                      color: widget.color,
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+                clipBehavior: Clip.antiAlias,
+                child: widget.portrait != null
+                    ? Image.memory(
+                        widget.portrait!,
+                        fit: BoxFit.cover,
+                        gaplessPlayback: true,
+                      )
+                    : Center(
+                        child: Text(
+                          widget.villainName.isNotEmpty
+                              ? widget.villainName[0]
+                              : '?',
+                          style: TextStyle(
+                            color: widget.color,
+                            fontSize: 26,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
               ),
               const SizedBox(width: 14),
               Expanded(

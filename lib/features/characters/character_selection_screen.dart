@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../app/app_theme.dart';
 import '../../services/game_state_service.dart';
 import '../../game/models/fighter_data.dart';
+import '../../game/render/character_painter.dart';
 
 class CharacterSelectionScreen extends StatefulWidget {
   const CharacterSelectionScreen({super.key});
@@ -32,7 +33,7 @@ class _CharacterSelectionScreenState extends State<CharacterSelectionScreen> {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/home'),
+          onPressed: () => context.canPop() ? context.pop() : context.go('/home'),
         ),
       ),
       body: Consumer<GameStateService>(
@@ -131,8 +132,7 @@ class _CharacterSelectionScreenState extends State<CharacterSelectionScreen> {
     GameStateService gs, {
     required bool isCompact,
   }) {
-    final unlocked =
-        hero.unlocked || gs.progress.unlockedCharacters.contains(hero.id);
+    final unlocked = gs.isHeroUnlocked(hero);
     final inTeam = gs.selectedHeroIds.contains(hero.id);
     final isFocused = index == _focusedIndex;
 
@@ -170,24 +170,7 @@ class _CharacterSelectionScreenState extends State<CharacterSelectionScreen> {
                   ? Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: hero.color,
-                          ),
-                          child: Center(
-                            child: Text(
-                              hero.name.isNotEmpty ? hero.name[0] : '?',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
-                        ),
+                        _heroFigure(hero, 48, unlocked: gs.isHeroUnlocked(hero)),
                         const SizedBox(width: 8),
                         Flexible(
                           child: Column(
@@ -207,7 +190,7 @@ class _CharacterSelectionScreenState extends State<CharacterSelectionScreen> {
                                 ),
                               ),
                               Text(
-                                hero.archetype.toUpperCase(),
+                                hero.archetype.replaceAll('_', ' ').toUpperCase(),
                                 style: const TextStyle(
                                   color: AppColors.accent,
                                   fontSize: 8,
@@ -222,24 +205,7 @@ class _CharacterSelectionScreenState extends State<CharacterSelectionScreen> {
                   : Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: hero.color,
-                          ),
-                          child: Center(
-                            child: Text(
-                              hero.name.isNotEmpty ? hero.name[0] : '?',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 22,
-                              ),
-                            ),
-                          ),
-                        ),
+                        _heroFigure(hero, 72, unlocked: gs.isHeroUnlocked(hero)),
                         const SizedBox(height: 8),
                         Text(
                           hero.name,
@@ -252,7 +218,7 @@ class _CharacterSelectionScreenState extends State<CharacterSelectionScreen> {
                           ),
                         ),
                         Text(
-                          hero.archetype.toUpperCase(),
+                          hero.archetype.replaceAll('_', ' ').toUpperCase(),
                           style: const TextStyle(
                             color: AppColors.accent,
                             fontSize: 9,
@@ -314,24 +280,7 @@ class _CharacterSelectionScreenState extends State<CharacterSelectionScreen> {
         children: [
           Row(
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: focusedHero.color,
-                ),
-                child: Center(
-                  child: Text(
-                    focusedHero.name.isNotEmpty ? focusedHero.name[0] : '?',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                    ),
-                  ),
-                ),
-              ),
+              _heroFigure(focusedHero, 66, unlocked: gs.isHeroUnlocked(focusedHero)),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -393,15 +342,21 @@ class _CharacterSelectionScreenState extends State<CharacterSelectionScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Special: ${focusedHero.specialAbility.replaceAll('_', ' ').toUpperCase()}',
+                        'Special: ${(gs.getAbility(focusedHero.specialAbility)?.name ?? focusedHero.specialAbility.replaceAll('_', ' ')).toUpperCase()}',
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
                           color: AppColors.accent,
                         ),
                       ),
+                      if (gs.getAbility(focusedHero.specialAbility) != null)
+                        Text(
+                          gs.getAbility(focusedHero.specialAbility)!.description,
+                          style: const TextStyle(
+                              fontSize: 10, color: AppColors.textPrimary),
+                        ),
                       Text(
-                        'Cooldown: ${focusedHero.specialCooldown}s',
+                        'Cooldown: ${gs.getAbility(focusedHero.specialAbility)?.cooldown ?? focusedHero.specialCooldown}s',
                         style: const TextStyle(
                             fontSize: 10, color: AppColors.textSecondary),
                       ),
@@ -412,7 +367,48 @@ class _CharacterSelectionScreenState extends State<CharacterSelectionScreen> {
             ),
           ),
 
-          const SizedBox(height: 18),
+          if (!gs.isHeroUnlocked(focusedHero)) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                const Icon(Icons.lock, color: Colors.orange, size: 16),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Unlock: ${focusedHero.unlockRequirement ?? 'Keep playing'}',
+                    style: const TextStyle(color: Colors.orange, fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 12),
+          InkWell(
+            onTap: () => context.push('/zones'),
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceLight,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.map, color: AppColors.secondary, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Zone: ${gs.getZone(gs.selectedZoneId)?.name ?? 'Arena'}',
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+                    ),
+                  ),
+                  const Text('Change',
+                      style: TextStyle(color: AppColors.secondary, fontSize: 12)),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
 
           // Launch button
           SizedBox(
@@ -442,6 +438,27 @@ class _CharacterSelectionScreenState extends State<CharacterSelectionScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _heroFigure(FighterData hero, double size, {required bool unlocked}) {
+    return Opacity(
+      opacity: unlocked ? 1 : 0.4,
+      child: SizedBox(
+        width: size * 0.75,
+        height: size,
+        child: CustomPaint(
+          painter: CharacterPreviewPainter(
+            CharacterLook(
+              color: hero.color,
+              archetype: hero.archetype,
+              isVillain: false,
+              skin: CharacterLook.skinFor(hero.id),
+            ),
+            pose: const CharacterPose(facing: Offset(1, 0.3)),
+          ),
+        ),
       ),
     );
   }

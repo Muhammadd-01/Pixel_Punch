@@ -1,3 +1,4 @@
+import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import '../models/zone_data.dart';
@@ -12,14 +13,31 @@ class ZoneComponent extends PositionComponent {
           position: Vector2.zero(),
         );
 
-  @override
-  void render(Canvas canvas) {
-    super.render(canvas);
+  ui.Picture? _picture;
+
+  /// The zone is static, so it is recorded once and replayed every frame.
+  ui.Picture _record() {
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
     _drawFloor(canvas);
     _drawGrid(canvas);
     _drawLocations(canvas);
     _drawObstacles(canvas);
     _drawBoundary(canvas);
+    return recorder.endRecording();
+  }
+
+  @override
+  void render(Canvas canvas) {
+    super.render(canvas);
+    canvas.drawPicture(_picture ??= _record());
+  }
+
+  @override
+  void onRemove() {
+    _picture?.dispose();
+    _picture = null;
+    super.onRemove();
   }
 
   void _drawFloor(Canvas canvas) {
@@ -109,6 +127,13 @@ class ZoneComponent extends PositionComponent {
       final color = _obstacleColor(obs.type);
       canvas.drawRRect(
         RRect.fromRectAndRadius(
+          Rect.fromLTWH(obs.x + 4, obs.y + 6, obs.width, obs.height),
+          const Radius.circular(4),
+        ),
+        Paint()..color = Colors.black.withValues(alpha: 0.3),
+      );
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
           Rect.fromLTWH(obs.x, obs.y, obs.width, obs.height),
           const Radius.circular(4),
         ),
@@ -120,9 +145,13 @@ class ZoneComponent extends PositionComponent {
           const Radius.circular(4),
         ),
         Paint()
-          ..color = color.withValues(alpha: 0.8)
+          ..color = Colors.black.withValues(alpha: 0.5)
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 1,
+          ..strokeWidth = 1.5,
+      );
+      canvas.drawRect(
+        Rect.fromLTWH(obs.x + 2, obs.y + 2, obs.width - 4, (obs.height * 0.2).clamp(2, 6)),
+        Paint()..color = Colors.white.withValues(alpha: 0.18),
       );
     }
   }

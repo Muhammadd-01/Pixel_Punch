@@ -80,3 +80,16 @@
 - **Stats**: 90 HP, 120 Speed, 8 Attack, 10 Defense.
 - **Special**: Team Recovery (Allied Healing).
 - **Signature Taunt**: *"Fine! You win this sprint. The next one is mine!"*
+
+---
+
+## 3. Face-Generated Villains (Villain Lab)
+
+Players can forge extra villains from a face photo (Home → **Villain Lab**).
+
+1. **Detect** — on Android/iOS, Google ML Kit (on-device) finds the largest face, its eyes, smile and head tilt. On web/desktop the photo centre is used.
+2. **Cartoonize** — the face is cropped, smoothed, posterized into cel-shaded bands, outlined with ink edges (Sobel) and cut into a round 256px portrait.
+3. **Analyse** — skin tone, hair colour, brightness/contrast and face shape are measured.
+4. **Generate** — the analysis suggests an archetype (big smile → Trickster, wide face → Tank, narrow face → Speedster, high contrast → Heavy Hitter, sleepy eyes → Support, otherwise Balanced). Stats, villain colour, title and dialogue are derived from it; the player can rename, re-title, change archetype and choose the lair zone.
+
+Generated villains join their zone's villain pool, use their archetype's special ability, speak their own lines in speech bubbles, and are drawn with the cartoon face, horns, angry brows and a cape. They do not count toward zone completion. Photos are never uploaded; only the small cartoon portrait is stored on the device.

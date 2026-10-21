@@ -16,6 +16,14 @@ class _ZoneSelectionScreenState extends State<ZoneSelectionScreen> {
   int _selectedIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+    final gs = context.read<GameStateService>();
+    final index = gs.zones.indexWhere((z) => z.id == gs.selectedZoneId);
+    if (index >= 0) _selectedIndex = index;
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isLandscape =
         MediaQuery.of(context).orientation == Orientation.landscape;
@@ -26,7 +34,7 @@ class _ZoneSelectionScreenState extends State<ZoneSelectionScreen> {
         title: const Text('Zone Selection'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/home'),
+          onPressed: () => context.canPop() ? context.pop() : context.go('/home'),
         ),
       ),
       body: Consumer<GameStateService>(
@@ -37,8 +45,7 @@ class _ZoneSelectionScreenState extends State<ZoneSelectionScreen> {
           }
 
           final selectedZone = zones[_selectedIndex.clamp(0, zones.length - 1)];
-          final isUnlocked = selectedZone.unlocked ||
-              (gs.progress.unlockedZones[selectedZone.id] ?? false);
+          final isUnlocked = gs.isZoneUnlocked(selectedZone);
 
           final zoneVillains = gs.getVillainsForZone(selectedZone.id);
           int discoveredCount = 0;
@@ -89,8 +96,7 @@ class _ZoneSelectionScreenState extends State<ZoneSelectionScreen> {
                           itemBuilder: (context, index) {
                             final zone = zones[index];
                             final isSelected = index == _selectedIndex;
-                            final unlocked = zone.unlocked ||
-                                (gs.progress.unlockedZones[zone.id] ?? false);
+                            final unlocked = gs.isZoneUnlocked(zone);
 
                             return GestureDetector(
                               onTap: () =>
@@ -185,8 +191,7 @@ class _ZoneSelectionScreenState extends State<ZoneSelectionScreen> {
       itemBuilder: (context, index) {
         final zone = zones[index];
         final isSelected = index == _selectedIndex;
-        final unlocked = zone.unlocked ||
-            (gs.progress.unlockedZones[zone.id] ?? false);
+        final unlocked = gs.isZoneUnlocked(zone);
 
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
@@ -375,19 +380,10 @@ class _ZoneSelectionScreenState extends State<ZoneSelectionScreen> {
               child: ElevatedButton.icon(
                 onPressed: () {
                   gs.setSelectedZone(selectedZone.id);
-                  context.push(
-                    '/game',
-                    extra: {
-                      'zoneId': selectedZone.id,
-                      'mode': gs.selectedMode.name,
-                      'heroIds': gs.selectedHeroIds.isNotEmpty
-                          ? gs.selectedHeroIds
-                          : [gs.heroes.first.id],
-                    },
-                  );
+                  context.push('/characters');
                 },
                 icon: const Icon(Icons.play_arrow),
-                label: Text('Enter ${selectedZone.name}'),
+                label: Text('Choose Heroes for ${selectedZone.name}'),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),

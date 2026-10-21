@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../../services/game_state_service.dart';
 import '../../services/local_storage_service.dart';
 import '../../services/supabase_service.dart';
+import '../../services/custom_villain_service.dart';
+import '../../services/sync_service.dart';
 import '../../core/widgets/pixel_punch_logo.dart';
 import '../../app/app_theme.dart';
 
@@ -59,19 +61,37 @@ class _SplashScreenState extends State<SplashScreen>
       final storage = context.read<LocalStorageService>();
       final supabase = context.read<SupabaseService>();
 
+      final customVillains = context.read<CustomVillainService>();
+      final stopwatch = Stopwatch()..start();
+
       await gameState.loadGameData();
+      await gameState.loadSavedData(storage);
+      await customVillains.load();
       final onboardingDone = await storage.isOnboardingComplete();
-      
+
+
       // Initialize Supabase safely in background
       try {
-        await supabase.initialize();
+        await supabase.initialize().timeout(const Duration(seconds: 3));
       } catch (e) {
         debugPrint('Supabase init skipped: $e');
       }
-      await Future.delayed(const Duration(milliseconds: 2500));
+      if (!mounted) return;
+      if (supabase.isAuthenticated) {
+        // Merge cloud progress in the background; never block startup.
+        final sync = context.read<SyncService>();
+        sync.syncData(gameState.progress).then((_) {
+          gameState.replaceProgress(gameState.progress);
+        }).catchError((Object e) {
+          debugPrint('Startup sync failed: $e');
+        });
+      }
+      // Keep the logo on screen briefly, but never longer than needed.
+      final remaining = 1600 - stopwatch.elapsedMilliseconds;
+      if (remaining > 0) await Future.delayed(Duration(milliseconds: remaining));
       if (!mounted) return;
       setState(() => _isLoading = false);
-      await Future.delayed(const Duration(milliseconds: 500));
+      await Future.delayed(const Duration(milliseconds: 250));
       if (!mounted) return;
       context.go(onboardingDone ? '/home' : '/onboarding');
     } catch (e) {

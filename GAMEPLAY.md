@@ -15,7 +15,8 @@ PixelPunch is designed for landscape mobile play:
 
 ## 2. Combat Rules & Damage Mechanics
 - **Damage Formula**:
-  $$\text{Effective Damage} = \max(1, \text{Raw Attack} - \text{Target Defense})$$
+  $$\text{Effective Damage} = \max(\max(1, \lfloor 0.35 \times \text{Raw Attack} \rfloor),\ \text{Raw Attack} - \text{Target Defense})$$
+  Defense subtracts from each hit, but at least 35% of the raw attack always gets through, so armoured villains stay beatable.
 - **Protective Shield**: When shielded, takes only 20% of incoming damage (80% mitigation).
 - **Invulnerability Frames**: When hit, a fighter flashes for 0.15s and receives 0.5s of invulnerability to prevent unfair multi-hit stunlocks.
 - **Knockback**: Hits push opponents away along the attack direction vector with exponential decay.

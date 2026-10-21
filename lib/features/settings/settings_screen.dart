@@ -3,6 +3,9 @@ import 'package:provider/provider.dart';
 import '../../app/app_theme.dart';
 import '../../services/audio_service.dart';
 import '../../services/local_storage_service.dart';
+import '../../services/game_state_service.dart';
+import '../../services/supabase_service.dart';
+import '../../services/sync_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -108,10 +111,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                   TextButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Local progress is up to date!')),
-                      );
+                    onPressed: () async {
+                      final messenger = ScaffoldMessenger.of(context);
+                      final supabase = context.read<SupabaseService>();
+                      final sync = context.read<SyncService>();
+                      final gs = context.read<GameStateService>();
+                      if (!supabase.isAuthenticated) {
+                        messenger.showSnackBar(const SnackBar(
+                          content: Text('Progress is saved on this device. Sign in from Profile to back it up to the cloud.'),
+                        ));
+                        return;
+                      }
+                      messenger.showSnackBar(const SnackBar(content: Text('Syncing...')));
+                      await sync.syncData(gs.progress);
+                      gs.replaceProgress(gs.progress);
+                      messenger.hideCurrentSnackBar();
+                      messenger.showSnackBar(SnackBar(
+                        content: Text(sync.status == SyncStatus.success
+                            ? 'Cloud sync complete!'
+                            : 'Sync could not finish (${sync.lastError ?? 'offline'}). Your progress is still saved locally.'),
+                      ));
                     },
                     child: const Text('Check Sync'),
                   ),

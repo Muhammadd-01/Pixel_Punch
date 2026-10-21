@@ -5,9 +5,16 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import '../../game/pixel_punch_game.dart';
+import '../../game/models/custom_villain.dart';
+import '../../game/models/dialogue_data.dart';
+import '../../game/models/fighter_data.dart';
 import '../../game/models/game_enums.dart';
 import '../../game/models/match_result.dart';
+import '../../services/custom_villain_service.dart';
 import '../../services/game_state_service.dart';
+import '../../services/local_storage_service.dart';
+import '../../services/supabase_service.dart';
+import '../../services/sync_service.dart';
 import 'widgets/game_hud.dart';
 import 'widgets/dialogue_overlay.dart';
 import 'widgets/game_over_overlay.dart';
@@ -17,20 +24,24 @@ class GameScreen extends StatefulWidget {
   final String zoneId;
   final String mode;
   final List<String> heroIds;
+  final List<String> villainIds;
 
   const GameScreen({
     super.key,
     required this.zoneId,
     required this.mode,
     required this.heroIds,
+    this.villainIds = const [],
   });
 
   @override
   State<GameScreen> createState() => _GameScreenState();
 }
 
-class _GameScreenState extends State<GameScreen> {
+class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   PixelPunchGame? _game;
+  int _session = 0;
+  String? _error;
   bool _showDialogue = false;
   bool _showGameOver = false;
   bool _showPause = false;
@@ -38,15 +49,20 @@ class _GameScreenState extends State<GameScreen> {
   String _dialogueVillainTitle = '';
   String _dialogueText = '';
   Color _dialogueColor = Colors.white;
+  Uint8List? _dialoguePortrait;
   MatchOutcome? _matchOutcome;
+  MatchRewards? _rewards;
   int _damageDealt = 0;
   int _damageTaken = 0;
   int _matchDuration = 0;
+  int _villainsDefeated = 0;
+  int _villainsTotal = 0;
+  final Map<String, Uint8List> _faces = {};
 
   @override
   void initState() {
     super.initState();
-    // Switch to landscape orientation when game begins
+    WidgetsBinding.instance.addObserver(this);
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
@@ -56,7 +72,7 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   void dispose() {
-    // Restore portrait orientation when exiting game
+    WidgetsBinding.instance.removeObserver(this);
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
@@ -64,51 +80,83 @@ class _GameScreenState extends State<GameScreen> {
     super.dispose();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Auto-pause when the app goes to the background.
+    if (state != AppLifecycleState.resumed &&
+        _game != null &&
+        !_showPause &&
+        !_showGameOver) {
+      _togglePause();
+    }
+  }
+
   void _quitToMenu() {
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-    ]);
     context.go('/home');
   }
 
-  void _initGame() {
+  Future<void> _initGame() async {
     final gs = context.read<GameStateService>();
-    final zoneData = gs.getZone(widget.zoneId);
-    if (zoneData == null) return;
+    final customService = context.read<CustomVillainService>();
+    final storage = context.read<LocalStorageService>();
+    final settings = await storage.loadSettings();
+    if (!mounted) return;
+
+    final zoneData = gs.getZone(widget.zoneId) ?? (gs.zones.isNotEmpty ? gs.zones.first : null);
+    if (zoneData == null) {
+      setState(() => _error = 'Game data is still loading. Please go back and try again.');
+      return;
+    }
 
     final gameMode = GameMode.values.firstWhere(
       (m) => m.name == widget.mode,
       orElse: () => GameMode.solo,
     );
 
-    // Get hero data
     final heroDataList = widget.heroIds
-        .map((id) => gs.getHero(id))
-        .where((h) => h != null)
-        .map((h) => h!)
+        .map(gs.getHero)
+        .whereType<FighterData>()
         .toList();
-
     if (heroDataList.isEmpty && gs.heroes.isNotEmpty) {
       heroDataList.add(gs.heroes.first);
     }
 
-    // Get villain data for this zone
-    final villainDataList = gs.getVillainsForZone(widget.zoneId);
+    // Face-generated villains for this zone plus any explicitly requested.
+    final customs = <CustomVillain>{
+      ...customService.forZone(zoneData.id),
+      ...widget.villainIds.map(customService.byId).whereType<CustomVillain>(),
+    }.toList();
 
-    _game = PixelPunchGame(
+    final villainDataList = gs.villainsForMatch(
+      zoneData.id,
+      gameMode,
+      customVillains: customs.map((c) => c.toFighterData()).toList(),
+      featuredIds: widget.villainIds,
+    );
+
+    final profiles = Map<String, DialogueProfile>.from(gs.dialogueProfiles);
+    final traits = <String, FaceTraits>{};
+    _faces.clear();
+    for (final c in customs) {
+      profiles[c.id] = c.toDialogueProfile();
+      traits[c.id] = c.traits;
+      _faces[c.id] = c.portraitPng;
+    }
+
+    final game = PixelPunchGame(
       zoneData: zoneData,
       heroDataList: heroDataList,
       villainDataList: villainDataList,
-      abilities: Map.fromEntries(
-        gs.abilities.map((a) => MapEntry(a.id, a)),
-      ),
-      dialogueProfiles: gs.dialogueProfiles,
+      abilities: {for (final a in gs.abilities) a.id: a},
+      dialogueProfiles: profiles,
       mode: gameMode,
+      villainFaces: Map.of(_faces),
+      villainTraits: traits,
+      hapticsEnabled: settings['vibration'] as bool? ?? true,
+      reducedMotion: settings['reduced_motion'] as bool? ?? false,
     );
 
-    // Set up callbacks
-    _game!.onDialogue = (villainId, name, title, text, color) {
+    game.onDialogue = (villainId, name, title, text, color) {
       if (!mounted) return;
       setState(() {
         _showDialogue = true;
@@ -116,55 +164,79 @@ class _GameScreenState extends State<GameScreen> {
         _dialogueVillainTitle = title;
         _dialogueText = text;
         _dialogueColor = color;
+        _dialoguePortrait = _faces[villainId];
       });
     };
 
-    _game!.onGameOver = (outcome, damageDealt, damageTaken, duration) {
-      if (!mounted) return;
-      setState(() {
-        _showGameOver = true;
-        _matchOutcome = outcome;
-        _damageDealt = damageDealt;
-        _damageTaken = damageTaken;
-        _matchDuration = duration;
-      });
+    game.onPauseRequested = () {
+      if (mounted && !_showGameOver && !_showDialogue) _togglePause();
+    };
 
+    game.onVillainDiscovered = (villainId, name, title) {
+      gs.updateVillainDiscovery(villainId, DiscoveryState.located);
+    };
+
+    game.onGameOver = (outcome, damageDealt, damageTaken, duration) {
+      if (!mounted) return;
+      final defeated = game.defeatedVillains.toSet();
+      final defeatedCount =
+          game.villainComponents.where((v) => v.isKnockedOut).length;
       final matchResult = MatchResult(
         matchId: const Uuid().v4(),
         mode: gameMode,
-        zoneId: widget.zoneId,
-        playerCharacterIds: widget.heroIds,
+        zoneId: zoneData.id,
+        playerCharacterIds: heroDataList.map((h) => h.id).toList(),
         enemyIds: villainDataList.map((v) => v.id).toList(),
         outcome: outcome,
         durationSeconds: duration,
         damageDealt: damageDealt,
         damageTaken: damageTaken,
-        xpEarned: outcome == MatchOutcome.victory ? 50 : 10,
+        xpEarned: GameStateService.xpFor(outcome, defeatedCount),
         completedAt: DateTime.now(),
       );
-      gs.recordMatchResult(matchResult);
+      final rewards = gs.applyMatchResult(
+        matchResult,
+        discoveredIds: game.discoveredVillains,
+        defeatedIds: defeated,
+      );
+      _syncMatch(matchResult);
 
-      if (outcome == MatchOutcome.victory) {
-        for (final villainId in _game!.defeatedVillains) {
-          gs.updateVillainDiscovery(villainId, DiscoveryState.defeated);
-        }
+      setState(() {
+        _showGameOver = true;
+        _showPause = false;
+        _matchOutcome = outcome;
+        _damageDealt = damageDealt;
+        _damageTaken = damageTaken;
+        _matchDuration = duration;
+        _rewards = rewards;
+        _villainsDefeated = defeatedCount;
+        _villainsTotal = game.villainComponents.length;
+      });
+    };
+
+    setState(() {
+      _game = game;
+      _session++;
+      _error = null;
+    });
+  }
+
+  void _syncMatch(MatchResult result) {
+    try {
+      final supabase = context.read<SupabaseService>();
+      final sync = context.read<SyncService>();
+      sync.queueMatch(result);
+      if (supabase.isAuthenticated) {
+        sync.syncData(context.read<GameStateService>().progress);
       }
-    };
-
-    _game!.onVillainDiscovered = (villainId, name, title) {
-      gs.updateVillainDiscovery(villainId, DiscoveryState.located);
-    };
+    } catch (e) {
+      debugPrint('Match sync skipped: $e');
+    }
   }
 
   void _dismissDialogue() {
     setState(() => _showDialogue = false);
     _game?.dismissDialogue();
-
-    if (_game != null && _game!.isExplorationMode) {
-      for (final villainId in _game!.discoveredVillains) {
-        _game!.startCombatWithVillain(villainId);
-      }
-    }
   }
 
   void _togglePause() {
@@ -172,65 +244,116 @@ class _GameScreenState extends State<GameScreen> {
       _showPause = !_showPause;
       if (_showPause) {
         _game?.pauseGame();
+        _game?.joystickDirection.setZero();
       } else {
         _game?.resumeGame();
       }
     });
   }
 
+  void _retry() {
+    setState(() {
+      _showGameOver = false;
+      _showDialogue = false;
+      _showPause = false;
+      _rewards = null;
+      _game = null;
+    });
+    _initGame();
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (_game == null) {
-      return const Scaffold(
-        body: Center(child: Text('Loading zone...')),
+    final game = _game;
+    if (game == null) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF0B0B16),
+        body: Center(
+          child: _error != null
+              ? Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(_error!, textAlign: TextAlign.center),
+                      const SizedBox(height: 16),
+                      ElevatedButton(onPressed: _quitToMenu, child: const Text('Back to Menu')),
+                    ],
+                  ),
+                )
+              : const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 12),
+                    Text('Loading zone...'),
+                  ],
+                ),
+        ),
       );
     }
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          GameWidget(game: _game!),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        if (_showGameOver) {
+          _quitToMenu();
+        } else if (!_showDialogue) {
+          _togglePause();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF0B0B16),
+        body: Stack(
+          children: [
+            GameWidget(key: ValueKey(_session), game: game),
 
-          if (!_showGameOver)
-            GameHud(
-              game: _game!,
-              onPause: _togglePause,
-              onAttack: () => _game!.attackPressed = true,
-              onSpecial: () => _game!.specialPressed = true,
-              onDodge: () => _game!.dodgePressed = true,
-              onJoystickUpdate: (direction) {
-                _game!.joystickDirection = direction;
-              },
-            ),
+            if (!_showGameOver)
+              GameHud(
+                key: ValueKey('hud$_session'),
+                game: game,
+                onPause: _togglePause,
+                onAttack: () => game.attackPressed = true,
+                onSpecial: () => game.specialPressed = true,
+                onDodge: () => game.dodgePressed = true,
+                onJoystickUpdate: (direction) {
+                  game.joystickDirection = direction;
+                },
+              ),
 
-          if (_showDialogue)
-            DialogueOverlay(
-              villainName: _dialogueVillainName,
-              villainTitle: _dialogueVillainTitle,
-              text: _dialogueText,
-              color: _dialogueColor,
-              onDismiss: _dismissDialogue,
-            ),
+            if (_showDialogue)
+              DialogueOverlay(
+                key: ValueKey(_dialogueText),
+                villainName: _dialogueVillainName,
+                villainTitle: _dialogueVillainTitle,
+                text: _dialogueText,
+                color: _dialogueColor,
+                portrait: _dialoguePortrait,
+                onDismiss: _dismissDialogue,
+              ),
 
-          if (_showPause)
-            PauseOverlay(
-              onResume: _togglePause,
-              onQuit: _quitToMenu,
-            ),
+            if (_showPause)
+              PauseOverlay(
+                onResume: _togglePause,
+                onRestart: _retry,
+                onQuit: _quitToMenu,
+              ),
 
-          if (_showGameOver)
-            GameOverOverlay(
-              outcome: _matchOutcome ?? MatchOutcome.defeat,
-              damageDealt: _damageDealt,
-              damageTaken: _damageTaken,
-              duration: _matchDuration,
-              onRetry: () {
-                setState(() => _showGameOver = false);
-                _initGame();
-              },
-              onQuit: _quitToMenu,
-            ),
-        ],
+            if (_showGameOver)
+              GameOverOverlay(
+                outcome: _matchOutcome ?? MatchOutcome.defeat,
+                damageDealt: _damageDealt,
+                damageTaken: _damageTaken,
+                duration: _matchDuration,
+                villainsDefeated: _villainsDefeated,
+                villainsTotal: _villainsTotal,
+                rewards: _rewards,
+                onRetry: _retry,
+                onQuit: _quitToMenu,
+              ),
+          ],
+        ),
       ),
     );
   }

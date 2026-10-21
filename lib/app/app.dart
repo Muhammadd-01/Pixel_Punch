@@ -7,6 +7,7 @@ import '../services/audio_service.dart';
 import '../services/local_storage_service.dart';
 import '../services/supabase_service.dart';
 import '../services/sync_service.dart';
+import '../services/custom_villain_service.dart';
 
 class PixelPunchApp extends StatelessWidget {
   const PixelPunchApp({super.key});
@@ -16,6 +17,7 @@ class PixelPunchApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => GameStateService()),
+        ChangeNotifierProvider(create: (_) => CustomVillainService()),
         Provider(create: (_) => AudioService()),
         Provider(create: (_) => LocalStorageService()),
         Provider(create: (_) => SupabaseService()),

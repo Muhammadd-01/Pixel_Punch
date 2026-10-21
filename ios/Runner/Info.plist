@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>PixelPunch uses the camera so you can turn a face into a cartoon villain. Photos stay on your device.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>PixelPunch lets you pick a photo to turn a face into a cartoon villain. Photos stay on your device.</string>
 </dict>
 </plist>
