@@ -19,4 +19,10 @@ class SupabaseConfig {
   static const String matchHistoryTable = 'match_history';
   static const String achievementsTable = 'achievements';
   static const String playerAchievementsTable = 'player_achievements';
+
+  // Social / Multiplayer tables
+  static const String friendshipsTable = 'friendships';
+  static const String userPresenceTable = 'user_presence';
+  static const String matchLobbiesTable = 'match_lobbies';
+  static const String lobbyPlayersTable = 'lobby_players';
 }

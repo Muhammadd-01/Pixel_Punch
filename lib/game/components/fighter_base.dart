@@ -10,6 +10,7 @@ import '../render/character_painter.dart';
 import '../pixel_punch_game.dart';
 import 'effects.dart';
 import '../../core/config/game_config.dart';
+import '../../services/audio_service.dart';
 
 /// Base class for all fighter components (heroes and villains).
 /// Holds health, combat timers, shared attack/special logic and rendering.
@@ -186,6 +187,7 @@ abstract class FighterBase extends PositionComponent {
       ));
     }
 
+    pixelGame?.audioService?.playCombatSound(CombatSound.damageTaken);
     if (isKnockedOut) _onKnockout();
     onDamaged(effectiveDamage);
     return effectiveDamage;
@@ -263,6 +265,7 @@ abstract class FighterBase extends PositionComponent {
     if (toTarget.length <= reach) {
       if (toTarget.length2 > 0) facingDirection = toTarget.normalized();
       dealDamageTo(target, fighterData.attackDamage);
+      pixelGame?.audioService?.playCombatSound(CombatSound.punchHit);
       return true;
     }
     return false;
@@ -274,6 +277,7 @@ abstract class FighterBase extends PositionComponent {
     final game = pixelGame;
     if (game == null) return;
     isUsingSpecial = true;
+    pixelGame?.audioService?.playCombatSound(CombatSound.specialActivate);
     specialCooldownTimer = ability.cooldown;
     attackAnim = 1;
 
@@ -354,6 +358,7 @@ abstract class FighterBase extends PositionComponent {
     if (!canDodge) return;
     isDodging = true;
     isInvulnerable = true;
+    pixelGame?.audioService?.playCombatSound(CombatSound.dodgeWhoosh);
     dodgeTimer = 0.3;
     invulnerabilityTimer = 0.3;
     dodgeCooldownTimer = dodgeCooldown;

@@ -17,6 +17,7 @@ import 'components/zone_component.dart';
 import 'combat/combat_manager.dart';
 import 'dialogue/dialogue_manager.dart';
 import '../core/config/game_config.dart';
+import '../services/audio_service.dart';
 
 /// Callback types for game-to-Flutter communication.
 typedef DialogueCallback = void Function(
@@ -39,6 +40,9 @@ class PixelPunchGame extends FlameGame with KeyboardEvents {
   final Map<String, FaceTraits> villainTraits;
   final bool hapticsEnabled;
   final bool reducedMotion;
+
+  /// Optional audio service for sound effects during gameplay.
+  final AudioService? audioService;
 
   // Callbacks to Flutter overlay
   DialogueCallback? onDialogue;
@@ -97,6 +101,7 @@ class PixelPunchGame extends FlameGame with KeyboardEvents {
     this.villainTraits = const {},
     this.hapticsEnabled = true,
     this.reducedMotion = false,
+    this.audioService,
   });
 
   bool get isReady => _loaded;
@@ -319,7 +324,9 @@ class PixelPunchGame extends FlameGame with KeyboardEvents {
 
   void _discover(VillainComponent villain) {
     villain.discovered = true;
+    audioService?.playGameEvent(GameEventSound.villainDiscover);
     if (discoveredVillains.add(villain.fighterData.id)) {
+      audioService?.playGameEvent(GameEventSound.villainDiscover);
       onVillainDiscovered?.call(
         villain.fighterData.id,
         villain.fighterData.name,
@@ -342,8 +349,10 @@ class PixelPunchGame extends FlameGame with KeyboardEvents {
   }
 
   void onFighterKnockedOut(FighterBase fighter) {
+    audioService?.playCombatSound(CombatSound.knockout);
     if (fighter is VillainComponent) {
       defeatedVillains.add(fighter.fighterData.id);
+      audioService?.playCombatSound(CombatSound.knockout);
       shake(0.2);
       _haptic(HapticFeedback.mediumImpact);
     } else if (fighter == player) {
@@ -361,10 +370,14 @@ class PixelPunchGame extends FlameGame with KeyboardEvents {
   void recordDamage(FighterBase attacker, FighterBase target, int amount) {
     if (attacker.team == Team.friendly) {
       totalDamageDealt += amount;
-      if (attacker == player) _haptic(HapticFeedback.selectionClick);
+      if (attacker == player) {
+        audioService?.playCombatSound(CombatSound.punchHit);
+        _haptic(HapticFeedback.selectionClick);
+      }
     } else {
       totalDamageTaken += amount;
       if (target == player) {
+        audioService?.playCombatSound(CombatSound.damageTaken);
         _haptic(HapticFeedback.lightImpact);
         shake(0.12);
       }
@@ -434,6 +447,9 @@ class PixelPunchGame extends FlameGame with KeyboardEvents {
 
   void _endGame(MatchOutcome outcome) {
     isGameOver = true;
+    audioService?.playGameEvent(outcome == MatchOutcome.victory
+        ? GameEventSound.victoryFanfare
+        : GameEventSound.defeatSting);
     player.inputDirection = Vector2.zero();
     for (final v in villainComponents) {
       if (v.isKnockedOut) defeatedVillains.add(v.fighterData.id);

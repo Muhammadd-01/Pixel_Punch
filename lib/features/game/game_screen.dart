@@ -11,6 +11,7 @@ import '../../game/models/fighter_data.dart';
 import '../../game/models/game_enums.dart';
 import '../../game/models/match_result.dart';
 import '../../services/custom_villain_service.dart';
+import '../../services/audio_service.dart';
 import '../../services/game_state_service.dart';
 import '../../services/local_storage_service.dart';
 import '../../services/supabase_service.dart';
@@ -49,7 +50,6 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   String _dialogueVillainTitle = '';
   String _dialogueText = '';
   Color _dialogueColor = Colors.white;
-  Uint8List? _dialoguePortrait;
   MatchOutcome? _matchOutcome;
   MatchRewards? _rewards;
   int _damageDealt = 0;
@@ -154,6 +154,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       villainTraits: traits,
       hapticsEnabled: settings['vibration'] as bool? ?? true,
       reducedMotion: settings['reduced_motion'] as bool? ?? false,
+      audioService: context.read<AudioService>(),
     );
 
     game.onDialogue = (villainId, name, title, text, color) {
@@ -164,7 +165,6 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
         _dialogueVillainTitle = title;
         _dialogueText = text;
         _dialogueColor = color;
-        _dialoguePortrait = _faces[villainId];
       });
     };
 
@@ -328,8 +328,8 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                 villainName: _dialogueVillainName,
                 villainTitle: _dialogueVillainTitle,
                 text: _dialogueText,
-                color: _dialogueColor,
-                portrait: _dialoguePortrait,
+                villainColor: _dialogueColor,
+                audioService: context.read<AudioService>(),
                 onDismiss: _dismissDialogue,
               ),
 

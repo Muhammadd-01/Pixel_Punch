@@ -7,6 +7,8 @@ import '../services/audio_service.dart';
 import '../services/local_storage_service.dart';
 import '../services/supabase_service.dart';
 import '../services/sync_service.dart';
+import '../services/friends_service.dart';
+import '../services/lobby_service.dart';
 import '../services/custom_villain_service.dart';
 
 class PixelPunchApp extends StatelessWidget {
@@ -32,6 +34,20 @@ class PixelPunchApp extends StatelessWidget {
                 localStorage: localStorage,
                 supabaseService: supabase,
               ),
+        ),
+        ChangeNotifierProxyProvider<SupabaseService, FriendsService>(
+          create: (context) => FriendsService(
+            supabaseService: context.read<SupabaseService>(),
+          ),
+          update: (_, supabase, previous) =>
+              previous ?? FriendsService(supabaseService: supabase),
+        ),
+        ChangeNotifierProxyProvider<SupabaseService, LobbyService>(
+          create: (context) => LobbyService(
+            supabaseService: context.read<SupabaseService>(),
+          ),
+          update: (_, supabase, previous) =>
+              previous ?? LobbyService(supabaseService: supabase),
         ),
       ],
       child: MaterialApp.router(

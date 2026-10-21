@@ -16,6 +16,9 @@ import '../features/auth/forgot_password_screen.dart';
 import '../features/profile/profile_screen.dart';
 import '../features/villain_lab/villain_lab_screen.dart';
 import '../features/villain_lab/villain_forge_screen.dart';
+import '../features/friends/friends_screen.dart';
+import '../features/multiplayer/lobby_screen.dart';
+import '../core/widgets/page_transitions.dart';
 
 class AppRouter {
   AppRouter._();
@@ -36,68 +39,126 @@ class AppRouter {
       ),
       GoRoute(
         path: '/onboarding',
-        builder: (context, state) => const OnboardingScreen(),
+        pageBuilder: (context, state) => PixelPageTransitions.dissolve(
+          key: state.pageKey,
+          child: const OnboardingScreen(),
+        ),
       ),
       GoRoute(
         path: '/welcome',
-        builder: (context, state) => const WelcomeScreen(),
+        pageBuilder: (context, state) => PixelPageTransitions.dissolve(
+          key: state.pageKey,
+          child: const WelcomeScreen(),
+        ),
       ),
       GoRoute(
         path: '/login',
-        builder: (context, state) => const LoginScreen(),
+        pageBuilder: (context, state) => PixelPageTransitions.slideUp(
+          key: state.pageKey,
+          child: const LoginScreen(),
+        ),
       ),
       GoRoute(
         path: '/register',
-        builder: (context, state) => const RegisterScreen(),
+        pageBuilder: (context, state) => PixelPageTransitions.slideUp(
+          key: state.pageKey,
+          child: const RegisterScreen(),
+        ),
       ),
       GoRoute(
         path: '/forgot-password',
-        builder: (context, state) => const ForgotPasswordScreen(),
+        pageBuilder: (context, state) => PixelPageTransitions.slideUp(
+          key: state.pageKey,
+          child: const ForgotPasswordScreen(),
+        ),
       ),
       GoRoute(
         path: '/home',
-        builder: (context, state) => const HomeScreen(),
+        pageBuilder: (context, state) => PixelPageTransitions.dissolve(
+          key: state.pageKey,
+          child: const HomeScreen(),
+        ),
       ),
       GoRoute(
         path: '/profile',
-        builder: (context, state) => const ProfileScreen(),
+        pageBuilder: (context, state) => PixelPageTransitions.slideRight(
+          key: state.pageKey,
+          child: const ProfileScreen(),
+        ),
       ),
       GoRoute(
         path: '/zones',
-        builder: (context, state) => const ZoneSelectionScreen(),
+        pageBuilder: (context, state) => PixelPageTransitions.slideRight(
+          key: state.pageKey,
+          child: const ZoneSelectionScreen(),
+        ),
       ),
       GoRoute(
         path: '/characters',
-        builder: (context, state) => const CharacterSelectionScreen(),
+        pageBuilder: (context, state) => PixelPageTransitions.slideRight(
+          key: state.pageKey,
+          child: const CharacterSelectionScreen(),
+        ),
       ),
       GoRoute(
         path: '/settings',
-        builder: (context, state) => const SettingsScreen(),
+        pageBuilder: (context, state) => PixelPageTransitions.slideRight(
+          key: state.pageKey,
+          child: const SettingsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/friends',
+        pageBuilder: (context, state) => PixelPageTransitions.slideRight(
+          key: state.pageKey,
+          child: const FriendsScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/lobby',
+        pageBuilder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return PixelPageTransitions.dissolve(
+            key: state.pageKey,
+            child: LobbyScreen(
+              inviteCode: extra?['inviteCode'] as String?,
+            ),
+          );
+        },
       ),
       GoRoute(
         path: '/game',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final extra = state.extra as Map<String, dynamic>?;
-          return GameScreen(
-            zoneId: extra?['zoneId'] as String? ?? 'zone_office',
-            mode: extra?['mode'] as String? ?? 'solo',
-            heroIds: (extra?['heroIds'] as List?)?.cast<String>() ?? const ['hero_striker'],
-            villainIds: (extra?['villainIds'] as List?)?.cast<String>() ?? const [],
+          return PixelPageTransitions.energyBurst(
+            key: state.pageKey,
+            child: GameScreen(
+              zoneId: extra?['zoneId'] as String? ?? 'zone_office',
+              mode: extra?['mode'] as String? ?? 'solo',
+              heroIds: (extra?['heroIds'] as List?)?.cast<String>() ?? const ['hero_striker'],
+              villainIds: (extra?['villainIds'] as List?)?.cast<String>() ?? const [],
+            ),
           );
         },
       ),
       GoRoute(
         path: '/villain-lab',
-        builder: (context, state) => const VillainLabScreen(),
+        pageBuilder: (context, state) => PixelPageTransitions.slideRight(
+          key: state.pageKey,
+          child: const VillainLabScreen(),
+        ),
       ),
       GoRoute(
         path: '/villain-lab/create',
-        builder: (context, state) {
+        pageBuilder: (context, state) {
           final extra = state.extra as Map<String, dynamic>?;
           final source = extra?['source'] as String?;
-          return VillainForgeScreen(
-            source: source == 'camera' ? ImageSource.camera : ImageSource.gallery,
-            editId: extra?['editId'] as String?,
+          return PixelPageTransitions.slideUp(
+            key: state.pageKey,
+            child: VillainForgeScreen(
+              source: source == 'camera' ? ImageSource.camera : ImageSource.gallery,
+              editId: extra?['editId'] as String?,
+            ),
           );
         },
       ),
