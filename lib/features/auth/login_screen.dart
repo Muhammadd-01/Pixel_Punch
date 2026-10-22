@@ -36,13 +36,10 @@ class _LoginScreenState extends State<LoginScreen>
       vsync: this,
       duration: const Duration(milliseconds: 700),
     );
-    _formSlide = Tween<Offset>(
-      begin: const Offset(0, 0.15),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _formController,
-      curve: Curves.easeOutCubic,
-    ));
+    _formSlide = Tween<Offset>(begin: const Offset(0, 0.15), end: Offset.zero)
+        .animate(
+          CurvedAnimation(parent: _formController, curve: Curves.easeOutCubic),
+        );
     _formOpacity = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _formController,
@@ -73,7 +70,7 @@ class _LoginScreenState extends State<LoginScreen>
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
-      if (mounted) context.go('/home');
+      if (mounted) context.go('/transition', extra: {'mode': 'login'});
     } catch (e) {
       setState(() {
         _errorMessage = formatAuthError(e);
@@ -101,25 +98,28 @@ class _LoginScreenState extends State<LoginScreen>
                     children: [
                       const SizedBox(height: 20),
                       // Back button
-                      Align(
-                        alignment: Alignment.topLeft,
-                        child: IconButton(
-                          onPressed: () => context.pop(),
-                          icon: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppColors.surface.withValues(alpha: 0.6),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.white12),
-                            ),
-                            child: const Icon(
-                              Icons.arrow_back_rounded,
-                              color: AppColors.textPrimary,
-                              size: 22,
+                      // Login is the root screen after onboarding, so the
+                      // back button only shows when there is somewhere to go.
+                      if (context.canPop())
+                        Align(
+                          alignment: Alignment.topLeft,
+                          child: IconButton(
+                            onPressed: () => context.pop(),
+                            icon: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppColors.surface.withValues(alpha: 0.6),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.white12),
+                              ),
+                              child: const Icon(
+                                Icons.arrow_back_rounded,
+                                color: AppColors.textPrimary,
+                                size: 22,
+                              ),
                             ),
                           ),
                         ),
-                      ),
                       const SizedBox(height: 12),
 
                       // Logo
@@ -133,9 +133,7 @@ class _LoginScreenState extends State<LoginScreen>
                       // Title
                       Text(
                         'Welcome Back!',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineMedium
+                        style: Theme.of(context).textTheme.headlineMedium
                             ?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: AppColors.textPrimary,
@@ -145,8 +143,8 @@ class _LoginScreenState extends State<LoginScreen>
                       Text(
                         'Sign in to continue your battle',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.textSecondary,
-                            ),
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                       const SizedBox(height: 36),
 
@@ -195,7 +193,8 @@ class _LoginScreenState extends State<LoginScreen>
                                   color: AppColors.textSecondary,
                                 ),
                                 onPressed: () => setState(
-                                    () => _showPassword = !_showPassword),
+                                  () => _showPassword = !_showPassword,
+                                ),
                               ),
                               validator: (val) {
                                 if (val == null || val.isEmpty) {
@@ -249,26 +248,34 @@ class _LoginScreenState extends State<LoginScreen>
                             Row(
                               children: [
                                 Expanded(
-                                    child: Divider(
-                                        color: AppColors.textSecondary
-                                            .withValues(alpha: 0.3))),
+                                  child: Divider(
+                                    color: AppColors.textSecondary.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                  ),
+                                ),
                                 Padding(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 16),
+                                    horizontal: 16,
+                                  ),
                                   child: Text(
                                     'OR',
                                     style: TextStyle(
-                                      color: AppColors.textSecondary
-                                          .withValues(alpha: 0.6),
+                                      color: AppColors.textSecondary.withValues(
+                                        alpha: 0.6,
+                                      ),
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                 ),
                                 Expanded(
-                                    child: Divider(
-                                        color: AppColors.textSecondary
-                                            .withValues(alpha: 0.3))),
+                                  child: Divider(
+                                    color: AppColors.textSecondary.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                             const SizedBox(height: 24),
@@ -280,7 +287,10 @@ class _LoginScreenState extends State<LoginScreen>
                               color: AppColors.textSecondary,
                               isOutlined: true,
                               width: double.infinity,
-                              onTap: () => context.go('/home'),
+                              onTap: () => context.go(
+                                '/transition',
+                                extra: {'mode': 'guest'},
+                              ),
                             ),
                             const SizedBox(height: 20),
                             Row(
@@ -331,8 +341,11 @@ class _LoginScreenState extends State<LoginScreen>
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline_rounded,
-              color: AppColors.error, size: 20),
+          const Icon(
+            Icons.error_outline_rounded,
+            color: AppColors.error,
+            size: 20,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(

@@ -91,6 +91,10 @@ class CustomVillain {
   final String archetype;
   final String zoneId;
   final Uint8List portraitPng;
+
+  /// Real (un-cartooned) face crop for the 3D game. Null for villains
+  /// created before the 3D mode existed; the portrait is used instead.
+  final Uint8List? facePhoto;
   final FaceTraits traits;
   final int baseHealth;
   final double moveSpeed;
@@ -109,6 +113,7 @@ class CustomVillain {
     required this.archetype,
     required this.zoneId,
     required this.portraitPng,
+    this.facePhoto,
     required this.traits,
     required this.baseHealth,
     required this.moveSpeed,
@@ -182,6 +187,7 @@ class CustomVillain {
         archetype: archetype ?? this.archetype,
         zoneId: zoneId ?? this.zoneId,
         portraitPng: portraitPng,
+        facePhoto: facePhoto,
         traits: traits,
         baseHealth: baseHealth ?? this.baseHealth,
         moveSpeed: moveSpeed ?? this.moveSpeed,
@@ -201,6 +207,7 @@ class CustomVillain {
         'archetype': archetype,
         'zoneId': zoneId,
         'portraitPng': base64Encode(portraitPng),
+        if (facePhoto != null) 'facePhoto': base64Encode(facePhoto!),
         'traits': traits.toJson(),
         'baseHealth': baseHealth,
         'moveSpeed': moveSpeed,
@@ -220,6 +227,9 @@ class CustomVillain {
         archetype: json['archetype'] as String,
         zoneId: json['zoneId'] as String,
         portraitPng: base64Decode(json['portraitPng'] as String),
+        facePhoto: json['facePhoto'] is String
+            ? base64Decode(json['facePhoto'] as String)
+            : null,
         traits: FaceTraits.fromJson(json['traits'] as Map<String, dynamic>),
         baseHealth: json['baseHealth'] as int,
         moveSpeed: (json['moveSpeed'] as num).toDouble(),

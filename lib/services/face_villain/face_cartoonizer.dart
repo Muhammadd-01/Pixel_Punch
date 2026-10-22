@@ -38,6 +38,10 @@ class CartoonRequest {
 /// measurements the villain generator needs.
 class CartoonResult {
   final Uint8List png;
+
+  /// Un-stylised, tightly cropped face photo (JPEG) used to texture the 3D
+  /// head so the villain looks like the real person.
+  final Uint8List photoJpg;
   final int skinTone; // ARGB
   final int hairColor; // ARGB
   final int shirtColor; // ARGB
@@ -54,6 +58,7 @@ class CartoonResult {
 
   const CartoonResult({
     required this.png,
+    required this.photoJpg,
     required this.skinTone,
     required this.hairColor,
     required this.shirtColor,
@@ -112,6 +117,26 @@ CartoonResult cartoonizeFace(CartoonRequest request) {
     interpolation: img.Interpolation.average,
   );
   base = base.convert(numChannels: 4);
+
+  // Tight, un-stylised face crop for the 3D head texture.
+  final img.Image photo;
+  if (face != null) {
+    final pSide = math.min(math.max(face.width, face.height) * 1.18,
+        math.min(src.width, src.height).toDouble());
+    final px = (face.left + face.width / 2 - pSide / 2).clamp(0, src.width - pSide).toDouble();
+    final py = (face.top + face.height / 2 - face.height * 0.06 - pSide / 2)
+        .clamp(0, src.height - pSide)
+        .toDouble();
+    photo = img.copyResize(
+      img.copyCrop(src, x: px.round(), y: py.round(), width: pSide.round(), height: pSide.round()),
+      width: portraitSize,
+      height: portraitSize,
+      interpolation: img.Interpolation.average,
+    );
+  } else {
+    photo = img.copyResize(img.copyCrop(base, x: 26, y: 20, width: 204, height: 204),
+        width: portraitSize, height: portraitSize);
+  }
 
   // Face rectangle inside the portrait.
   double fl, ft, fw, fh;
@@ -271,6 +296,7 @@ CartoonResult cartoonizeFace(CartoonRequest request) {
 
   return CartoonResult(
     png: Uint8List.fromList(img.encodePng(toon)),
+    photoJpg: Uint8List.fromList(img.encodeJpg(photo, quality: 88)),
     skinTone: skin,
     hairColor: hair,
     shirtColor: shirt,

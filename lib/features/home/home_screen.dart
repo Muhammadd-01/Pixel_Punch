@@ -171,6 +171,14 @@ class _HomeScreenState extends State<HomeScreen>
                     onTap: () => context.push('/villain-lab'),
                   ),
                   const SizedBox(height: 12),
+                  PixelButton(
+                    label: '3D ROYALE',
+                    icon: Icons.public,
+                    color: const Color(0xFF00E5FF),
+                    width: double.infinity,
+                    onTap: () => context.push('/royale'),
+                  ),
+                  const SizedBox(height: 12),
 
                   // 2x2 Grid + Friends
                   Row(
@@ -502,6 +510,14 @@ class _HomeScreenState extends State<HomeScreen>
             color: const Color(0xFFE040FB),
             width: double.infinity,
             onTap: () => context.push('/villain-lab'),
+          ),
+          const SizedBox(height: 12),
+          PixelButton(
+            label: '3D ROYALE',
+            icon: Icons.public,
+            color: const Color(0xFF00E5FF),
+            width: double.infinity,
+            onTap: () => context.push('/royale'),
           ),
           const SizedBox(height: 12),
           Row(

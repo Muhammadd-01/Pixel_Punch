@@ -15,6 +15,9 @@ void main() {
     expect(find.byType(PixelPunchLogoWidget), findsOneWidget);
     expect(find.text('Your Zone. Your Rivals. Your Victory.'), findsOneWidget);
 
+    // Let the splash's delayed progress-bar fade-in fire.
+    await tester.pump(const Duration(milliseconds: 700));
+
     addTearDown(() {
       tester.view.resetPhysicalSize();
       tester.view.resetDevicePixelRatio();

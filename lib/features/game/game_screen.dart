@@ -1,5 +1,6 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
+import '../../core/widgets/music_scope.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -212,6 +213,11 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
         _villainsDefeated = defeatedCount;
         _villainsTotal = game.villainComponents.length;
       });
+      MusicScope.switchTo(
+          context,
+          outcome == MatchOutcome.victory
+              ? MusicTrack.victoryTheme
+              : MusicTrack.exploration);
     };
 
     setState(() {

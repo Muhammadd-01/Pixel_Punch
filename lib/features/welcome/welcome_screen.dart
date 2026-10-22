@@ -138,7 +138,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                             isLarge: true,
                             showGlow: true,
                             width: double.infinity,
-                            onTap: () => context.go('/home'),
+                            onTap: () => context.go('/transition', extra: {'mode': 'guest'}),
                           ),
                           const SizedBox(height: 16),
 

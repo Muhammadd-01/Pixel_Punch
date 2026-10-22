@@ -35,14 +35,7 @@ class ProfileScreen extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.logout),
               tooltip: 'Sign Out',
-              onPressed: () async {
-                await supabase.signOut();
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Signed out successfully')),
-                  );
-                }
-              },
+              onPressed: () => context.go('/transition', extra: {'mode': 'logout'}),
             ),
         ],
       ),

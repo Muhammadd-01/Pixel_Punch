@@ -87,7 +87,7 @@ class _SplashScreenState extends State<SplashScreen>
 
       // Step 3: Initialize audio
       if (mounted) setState(() => _loadingText = 'Preparing sounds...');
-      await audio.initialize();
+      await audio.initialize(settings: await storage.loadSettings());
 
       // Step 4: Check onboarding
       final onboardingDone = await storage.isOnboardingComplete();
@@ -119,7 +119,15 @@ class _SplashScreenState extends State<SplashScreen>
       setState(() => _isLoading = false);
       await Future.delayed(const Duration(milliseconds: 300));
       if (!mounted) return;
-      context.go(onboardingDone ? '/home' : '/onboarding');
+      // First install: onboarding. Afterwards: straight home when signed in
+      // (or playing as guest), otherwise the login screen.
+      final guest = await storage.isGuestChosen();
+      if (!mounted) return;
+      context.go(!onboardingDone
+          ? '/onboarding'
+          : (supabase.isAuthenticated || guest)
+              ? '/home'
+              : '/login');
     } catch (e) {
       debugPrint('Splash init error: $e');
       if (mounted) {

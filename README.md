@@ -11,6 +11,9 @@ Explore corporate-themed cartoon districts, track down eccentric fictional workp
 ## 🎮 Core Features
 
 - **2D Elevated Arena & Exploration**: Smooth top-down exploration with virtual joystick controls, boundary collisions, environmental obstacles, and dynamic camera tracking.
+- **3D Royale (Unity)**: A PUBG-style 3D battle royale on a huge procedural island, with skydive drops, TPP/FPP camera, jump/crouch/prone, a 3-hit punch combo, guns and loot, a shrinking safe zone, and villains from your roster (Villain Lab faces appear on their 3D heads). Play solo or in squads with friends via a join code. Setup: [`unity/README.md`](unity/README.md).
+- **First-launch flow**: Onboarding (Skip/Next) → Login/Register (or guest) → animated loading transition → Home. Signing out plays the same transition back to Login.
+- **Sound**: Synthesised SFX, dialogue voice blips and looping chiptune music (`tools/generate_audio.py`), with volume/mute saved in Settings.
 - **Villain Lab (Face → 2D Villain)**: Take a selfie or pick a photo and PixelPunch turns the face into a playable cartoon villain. On-device ML Kit finds the face and eyes, the photo is cel-shaded and ink-outlined into a round cartoon portrait, and the face's features (smile, face shape, contrast, skin/hair colours) pick the villain's fighting style, stats, colour scheme and trash talk. Forged villains get devil horns, angry brows and a cape, spawn in the zone you choose and can be fought in Solo/Duo/Squad. Photos never leave the device.
 - **Fictional Company Villains**: Encounter fictional villains inspired by workplace humor (The Bug Phantom, Captain Deadline, Firewall Guardian, Lag Lord, Dark Designer, and Chaos Manager).
 - **Living Dialogue System**: Contextual on-screen dialogue with typewriter animations, portrait popups, reaction taunts, low-health lines, and discovery announcements.

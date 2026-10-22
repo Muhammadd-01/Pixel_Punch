@@ -121,6 +121,7 @@ class VillainGenerator {
       archetype: archetype,
       zoneId: zoneId,
       portraitPng: face.png,
+      facePhoto: face.photoJpg,
       traits: traits,
       baseHealth: stats.health,
       moveSpeed: stats.speed,

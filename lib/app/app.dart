@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'app_theme.dart';
 import 'app_router.dart';
+import '../core/widgets/music_scope.dart';
 import '../services/game_state_service.dart';
 import '../services/audio_service.dart';
 import '../services/local_storage_service.dart';
@@ -50,11 +51,13 @@ class PixelPunchApp extends StatelessWidget {
               previous ?? LobbyService(supabaseService: supabase),
         ),
       ],
-      child: MaterialApp.router(
-        title: 'PixelPunch',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.darkTheme,
-        routerConfig: AppRouter.router,
+      child: AudioLifecycle(
+        child: MaterialApp.router(
+          title: 'PixelPunch',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.darkTheme,
+          routerConfig: AppRouter.router,
+        ),
       ),
     );
   }

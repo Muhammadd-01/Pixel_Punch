@@ -11,6 +11,7 @@ class LocalStorageService {
   static const String _settingsKey = 'player_settings';
   static const String _onboardingCompleteKey = 'onboarding_complete';
   static const String _isGuestKey = 'is_guest';
+  static const String _guestChosenKey = 'guest_chosen';
 
   Future<SharedPreferences> get _prefs => SharedPreferences.getInstance();
 
@@ -79,6 +80,17 @@ class LocalStorageService {
   Future<void> setGuest(bool isGuest) async {
     final prefs = await _prefs;
     await prefs.setBool(_isGuestKey, isGuest);
+  }
+
+  /// Whether the player chose "Play as guest" (skips the login screen).
+  Future<bool> isGuestChosen() async {
+    final prefs = await _prefs;
+    return prefs.getBool(_guestChosenKey) ?? false;
+  }
+
+  Future<void> setGuestChosen(bool value) async {
+    final prefs = await _prefs;
+    await prefs.setBool(_guestChosenKey, value);
   }
 
   /// Save a setting.

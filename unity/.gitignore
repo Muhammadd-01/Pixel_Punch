@@ -1,0 +1,11 @@
+# Unity generated folders
+PixelPunch3D/[Ll]ibrary/
+PixelPunch3D/[Tt]emp/
+PixelPunch3D/[Oo]bj/
+PixelPunch3D/[Bb]uild/
+PixelPunch3D/[Bb]uilds/
+PixelPunch3D/[Ll]ogs/
+PixelPunch3D/[Uu]ser[Ss]ettings/
+PixelPunch3D/*.csproj
+PixelPunch3D/*.sln
+PixelPunch3D/.vs/

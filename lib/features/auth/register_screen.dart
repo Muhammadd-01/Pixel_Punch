@@ -83,7 +83,7 @@ class _RegisterScreenState extends State<RegisterScreen>
       if (!mounted) return;
 
       if (response?.user?.emailConfirmedAt != null) {
-        context.go('/home');
+        context.go('/transition', extra: {'mode': 'register'});
       } else {
         setState(() => _registrationComplete = true);
       }
@@ -119,7 +119,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                       Align(
                         alignment: Alignment.topLeft,
                         child: IconButton(
-                          onPressed: () => context.pop(),
+                          onPressed: () => context.canPop() ? context.pop() : context.go('/login'),
                           icon: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
@@ -405,7 +405,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                     icon: Icons.play_arrow_rounded,
                     color: AppColors.textSecondary,
                     isOutlined: true,
-                    onTap: () => context.go('/home'),
+                    onTap: () => context.go('/transition', extra: {'mode': 'guest'}),
                   ),
                 ],
               ),

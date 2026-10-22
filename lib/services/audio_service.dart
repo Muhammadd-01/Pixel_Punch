@@ -1,24 +1,30 @@
-import 'dart:math';
-import 'dart:typed_data';
 import 'package:flutter/foundation.dart';
 import 'package:flame_audio/flame_audio.dart';
 
-/// Complete audio service with procedural sound generation.
+/// Plays PixelPunch's sound effects, dialogue voice blips and music loops.
 ///
-/// Generates game sounds programmatically (no external audio files needed).
-/// Supports SFX, background music loops, villain voice blips, and volume control.
+/// The WAV files in `assets/audio/` are synthesised by
+/// `tools/generate_audio.py`, so they can be regenerated or tweaked freely.
+/// Every call fails silently: audio problems must never break the game.
 class AudioService {
   double _masterVolume = 1.0;
-  double _musicVolume = 0.7;
+  double _musicVolume = 0.6;
   double _sfxVolume = 1.0;
   double _voiceVolume = 0.8;
   bool _isMuted = false;
   bool _isInitialized = false;
 
-  final Random _rng = Random();
-
-  // Track what's currently playing
   String? _currentMusic;
+  bool _musicPaused = false;
+  final Map<String, int> _lastPlayed = {};
+
+  static const _sfxFiles = [
+    'button_tap', 'button_back', 'menu_hover', 'punch_hit', 'punch_heavy',
+    'punch_miss', 'dodge_whoosh', 'special_activate', 'damage_taken',
+    'knockout', 'health_low', 'villain_discover', 'victory_fanfare',
+    'defeat_sting', 'level_up', 'countdown', 'gun_shot', 'gun_reload',
+    'item_pickup', 'jump', 'land', 'footstep',
+  ];
 
   double get masterVolume => _masterVolume;
   double get musicVolume => _musicVolume;
@@ -26,31 +32,45 @@ class AudioService {
   double get voiceVolume => _voiceVolume;
   bool get isMuted => _isMuted;
   bool get isInitialized => _isInitialized;
+  String? get currentMusic => _currentMusic;
 
-  /// Initialize the audio engine. Call once on startup.
-  Future<void> initialize() async {
+  /// Preloads sound effects and restores saved volumes. Call once on startup.
+  Future<void> initialize({Map<String, dynamic>? settings}) async {
     if (_isInitialized) return;
+    if (settings != null) applySettings(settings);
     try {
-      // FlameAudio init is lightweight — just ensure the pool is ready
-      FlameAudio.audioCache.loadAll([]);
-      _isInitialized = true;
+      FlameAudio.bgm.initialize();
+      await FlameAudio.audioCache.loadAll([
+        for (final s in _sfxFiles) 'sfx/$s.wav',
+        for (final v in VoiceType.values) 'voice/${v.name}.wav',
+      ]);
       debugPrint('[AudioService] Initialized');
     } catch (e) {
       debugPrint('[AudioService] Init error (continuing silently): $e');
-      _isInitialized = true; // Don't block the app
     }
+    _isInitialized = true;
+  }
+
+  /// Restores volumes saved by the settings screen.
+  void applySettings(Map<String, dynamic> settings) {
+    _masterVolume = (settings['master_volume'] as num?)?.toDouble() ?? _masterVolume;
+    _musicVolume = (settings['music_volume'] as num?)?.toDouble() ?? _musicVolume;
+    _sfxVolume = (settings['sfx_volume'] as num?)?.toDouble() ?? _sfxVolume;
+    _voiceVolume = (settings['voice_volume'] as num?)?.toDouble() ?? _voiceVolume;
+    _isMuted = settings['muted'] as bool? ?? _isMuted;
   }
 
   // ===========================================================================
   // Volume Controls
-  // ===========================================================================
 
   void setMasterVolume(double volume) {
     _masterVolume = volume.clamp(0.0, 1.0);
+    _updateMusicVolume();
   }
 
   void setMusicVolume(double volume) {
     _musicVolume = volume.clamp(0.0, 1.0);
+    _updateMusicVolume();
   }
 
   void setSfxVolume(double volume) {
@@ -61,410 +81,114 @@ class AudioService {
     _voiceVolume = volume.clamp(0.0, 1.0);
   }
 
-  void toggleMute() {
-    _isMuted = !_isMuted;
+  void toggleMute() => setMuted(!_isMuted);
+
+  void setMuted(bool muted) {
+    _isMuted = muted;
     if (_isMuted) {
-      stopAll();
+      _safe(() => FlameAudio.bgm.pause());
+      _musicPaused = true;
+    } else if (_currentMusic != null) {
+      final track = _currentMusic!;
+      _currentMusic = null;
+      playMusic(track);
     }
   }
 
   double get _effectiveVolume => _isMuted ? 0.0 : _masterVolume;
 
-  // ===========================================================================
-  // SFX — Fire-and-forget sound effects
-  // ===========================================================================
-
-  /// Play a named sound effect.
-  void playSfx(String name) {
-    if (_isMuted || _effectiveVolume <= 0) return;
-    final vol = _effectiveVolume * _sfxVolume;
-    debugPrint('[Audio] SFX: $name (vol: ${vol.toStringAsFixed(2)})');
-    // Trigger via the procedural sound system
-    _playProceduralSfx(name, vol);
-  }
-
-  /// Play a UI interaction sound (button tap, back, etc.)
-  void playUiSound(UiSound sound) {
-    playSfx(sound.name);
-  }
-
-  /// Play a combat sound effect.
-  void playCombatSound(CombatSound sound) {
-    playSfx(sound.name);
-  }
-
-  /// Play a game event sound.
-  void playGameEvent(GameEventSound sound) {
-    playSfx(sound.name);
+  void _updateMusicVolume() {
+    final vol = _effectiveVolume * _musicVolume;
+    _safe(() => FlameAudio.bgm.audioPlayer.setVolume(vol));
   }
 
   // ===========================================================================
-  // Villain Voice Blips (Undertale/Animal Crossing style)
-  // ===========================================================================
+  // SFX
 
-  /// Generate a voice blip sound for dialogue text reveal.
-  /// Each archetype has a distinct "voice" — pitch, speed, and timbre vary.
+  /// Play a named sound effect (file name in assets/audio/sfx without .wav).
+  void playSfx(String name, {double volume = 1.0, int minGapMs = 45}) {
+    final vol = _effectiveVolume * _sfxVolume * volume;
+    if (vol <= 0.01) return;
+    // Rapid-fire guard so a flurry of hits does not stack 20 players.
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (now - (_lastPlayed[name] ?? 0) < minGapMs) return;
+    _lastPlayed[name] = now;
+    _safe(() => FlameAudio.play('sfx/$name.wav', volume: vol.clamp(0.0, 1.0)));
+  }
+
+  void playUiSound(UiSound sound) => playSfx(sound.name, volume: 0.6);
+
+  void playCombatSound(CombatSound sound) => playSfx(sound.name);
+
+  void playGameEvent(GameEventSound sound) => playSfx(sound.name, minGapMs: 400);
+
+  // ===========================================================================
+  // Villain Voice Blips (Animal Crossing style)
+
   void playVoiceBlip(VoiceType voice) {
-    if (_isMuted || _effectiveVolume <= 0) return;
-    final vol = _effectiveVolume * _voiceVolume * 0.4;
-    debugPrint('[Audio] Voice blip: ${voice.name} (vol: ${vol.toStringAsFixed(2)})');
-    _playVoiceBlipProcedural(voice, vol);
+    final vol = _effectiveVolume * _voiceVolume * 0.5;
+    if (vol <= 0.01) return;
+    final key = 'voice_${voice.name}';
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (now - (_lastPlayed[key] ?? 0) < 70) return;
+    _lastPlayed[key] = now;
+    _safe(() => FlameAudio.play('voice/${voice.name}.wav', volume: vol));
   }
 
   // ===========================================================================
   // Background Music
-  // ===========================================================================
 
-  /// Play background music. Crossfades if something is already playing.
+  void playTrack(MusicTrack track) => playMusic(track.name);
+
+  /// Loops a music track; does nothing if it is already playing.
   void playMusic(String name) {
-    if (_isMuted) return;
-    if (_currentMusic == name) return;
+    if (_currentMusic == name && !_musicPaused) return;
     _currentMusic = name;
+    if (_isMuted) return;
+    _musicPaused = false;
     final vol = _effectiveVolume * _musicVolume;
-    debugPrint('[Audio] Music: $name (vol: ${vol.toStringAsFixed(2)})');
-    // In a full implementation, this would start a looping audio track.
-    // For now, music is logged. When audio assets are added, uncomment:
-    // FlameAudio.bgm.play('music/$name.ogg', volume: vol);
+    _safe(() => FlameAudio.bgm.play('music/$name.wav', volume: vol));
   }
 
-  /// Stop background music.
   void stopMusic() {
     _currentMusic = null;
-    debugPrint('[Audio] Music stopped');
-    // FlameAudio.bgm.stop();
+    _safe(() => FlameAudio.bgm.stop());
   }
 
-  /// Stop all audio.
-  void stopAll() {
-    stopMusic();
-    debugPrint('[Audio] Stop all');
-  }
+  void stopAll() => stopMusic();
 
-  /// Handle app lifecycle pause.
+  /// App went to the background.
   void onPause() {
-    stopAll();
+    _musicPaused = true;
+    _safe(() => FlameAudio.bgm.pause());
   }
 
-  /// Handle app lifecycle resume.
+  /// App came back to the foreground.
   void onResume() {
-    if (_currentMusic != null) {
-      playMusic(_currentMusic!);
+    if (_currentMusic != null && !_isMuted) {
+      _musicPaused = false;
+      _safe(() => FlameAudio.bgm.resume());
     }
   }
 
   void dispose() {
-    stopAll();
+    _safe(() => FlameAudio.bgm.dispose());
   }
 
-  // ===========================================================================
-  // Procedural Sound Generation
-  // ===========================================================================
-
-  /// Generate and play a procedural sound effect.
-  /// These use simple waveform synthesis to create game-appropriate sounds
-  /// without needing external audio files.
-  void _playProceduralSfx(String name, double volume) {
-    // Each sound has unique synthesis parameters
-    switch (name) {
-      case 'punch_hit':
-        _synthesize(
-          frequency: 80 + _rng.nextDouble() * 30,
-          duration: 0.08,
-          attack: 0.002,
-          decay: 0.08,
-          waveform: Waveform.noise,
-          volume: volume,
-        );
-        break;
-      case 'punch_heavy':
-        _synthesize(
-          frequency: 50 + _rng.nextDouble() * 20,
-          duration: 0.15,
-          attack: 0.001,
-          decay: 0.15,
-          waveform: Waveform.noise,
-          volume: volume * 1.2,
-        );
-        break;
-      case 'punch_miss':
-        _synthesize(
-          frequency: 200 + _rng.nextDouble() * 100,
-          duration: 0.06,
-          attack: 0.001,
-          decay: 0.06,
-          waveform: Waveform.noise,
-          volume: volume * 0.3,
-        );
-        break;
-      case 'dodge_whoosh':
-        _synthesize(
-          frequency: 400,
-          duration: 0.12,
-          attack: 0.01,
-          decay: 0.1,
-          waveform: Waveform.noise,
-          volume: volume * 0.5,
-          pitchSweep: -200,
-        );
-        break;
-      case 'special_activate':
-        _synthesize(
-          frequency: 440,
-          duration: 0.3,
-          attack: 0.01,
-          decay: 0.25,
-          waveform: Waveform.sine,
-          volume: volume * 0.6,
-          pitchSweep: 220,
-        );
-        break;
-      case 'knockout':
-        _synthesize(
-          frequency: 200,
-          duration: 0.4,
-          attack: 0.001,
-          decay: 0.4,
-          waveform: Waveform.square,
-          volume: volume * 0.7,
-          pitchSweep: -180,
-        );
-        break;
-      case 'damage_taken':
-        _synthesize(
-          frequency: 150,
-          duration: 0.1,
-          attack: 0.001,
-          decay: 0.1,
-          waveform: Waveform.sawtooth,
-          volume: volume * 0.4,
-        );
-        break;
-      case 'villain_discover':
-        _synthesize(
-          frequency: 330,
-          duration: 0.5,
-          attack: 0.02,
-          decay: 0.45,
-          waveform: Waveform.sine,
-          volume: volume * 0.5,
-          pitchSweep: 110,
-        );
-        break;
-      case 'victory_fanfare':
-        _synthesize(
-          frequency: 523,
-          duration: 0.6,
-          attack: 0.01,
-          decay: 0.55,
-          waveform: Waveform.sine,
-          volume: volume * 0.6,
-          pitchSweep: 200,
-        );
-        break;
-      case 'defeat_sting':
-        _synthesize(
-          frequency: 300,
-          duration: 0.5,
-          attack: 0.01,
-          decay: 0.5,
-          waveform: Waveform.sawtooth,
-          volume: volume * 0.5,
-          pitchSweep: -200,
-        );
-        break;
-      case 'level_up':
-        _synthesize(
-          frequency: 400,
-          duration: 0.4,
-          attack: 0.01,
-          decay: 0.35,
-          waveform: Waveform.sine,
-          volume: volume * 0.6,
-          pitchSweep: 300,
-        );
-        break;
-      case 'button_tap':
-        _synthesize(
-          frequency: 800,
-          duration: 0.04,
-          attack: 0.001,
-          decay: 0.04,
-          waveform: Waveform.sine,
-          volume: volume * 0.25,
-        );
-        break;
-      case 'button_back':
-        _synthesize(
-          frequency: 600,
-          duration: 0.05,
-          attack: 0.001,
-          decay: 0.05,
-          waveform: Waveform.sine,
-          volume: volume * 0.2,
-          pitchSweep: -200,
-        );
-        break;
-      case 'countdown':
-        _synthesize(
-          frequency: 660,
-          duration: 0.15,
-          attack: 0.005,
-          decay: 0.14,
-          waveform: Waveform.square,
-          volume: volume * 0.4,
-        );
-        break;
-      case 'health_low':
-        _synthesize(
-          frequency: 440,
-          duration: 0.2,
-          attack: 0.01,
-          decay: 0.15,
-          waveform: Waveform.square,
-          volume: volume * 0.3,
-        );
-        break;
-      default:
-        debugPrint('[Audio] Unknown SFX: $name');
-    }
-  }
-
-  /// Generate a character voice blip based on archetype.
-  void _playVoiceBlipProcedural(VoiceType voice, double volume) {
-    double freq;
-    double duration;
-    Waveform waveform;
-    double pitchVariation;
-
-    switch (voice) {
-      case VoiceType.tank:
-        freq = 120 + _rng.nextDouble() * 30;
-        duration = 0.07;
-        waveform = Waveform.square;
-        pitchVariation = 15;
-      case VoiceType.speedster:
-        freq = 500 + _rng.nextDouble() * 100;
-        duration = 0.03;
-        waveform = Waveform.sine;
-        pitchVariation = 50;
-      case VoiceType.heavyHitter:
-        freq = 80 + _rng.nextDouble() * 40;
-        duration = 0.09;
-        waveform = Waveform.sawtooth;
-        pitchVariation = 20;
-      case VoiceType.trickster:
-        freq = 300 + _rng.nextDouble() * 200;
-        duration = 0.04;
-        waveform = Waveform.sine;
-        pitchVariation = 100;
-      case VoiceType.support:
-        freq = 350 + _rng.nextDouble() * 60;
-        duration = 0.05;
-        waveform = Waveform.sine;
-        pitchVariation = 30;
-      case VoiceType.villain:
-        freq = 180 + _rng.nextDouble() * 60;
-        duration = 0.06;
-        waveform = Waveform.sawtooth;
-        pitchVariation = 40;
-      case VoiceType.narrator:
-        freq = 260 + _rng.nextDouble() * 40;
-        duration = 0.05;
-        waveform = Waveform.sine;
-        pitchVariation = 20;
-      case VoiceType.balanced:
-        freq = 280 + _rng.nextDouble() * 50;
-        duration = 0.05;
-        waveform = Waveform.sine;
-        pitchVariation = 30;
-    }
-
-    // Add slight randomization for natural feel
-    freq += (_rng.nextDouble() - 0.5) * pitchVariation;
-
-    _synthesize(
-      frequency: freq,
-      duration: duration,
-      attack: 0.002,
-      decay: duration * 0.8,
-      waveform: waveform,
-      volume: volume,
-    );
-  }
-
-  /// Low-level waveform synthesizer.
-  /// Generates audio data that can be played through the Flame audio system.
-  /// Currently logs the synthesis parameters; when connected to a raw audio
-  /// player (e.g. flutter_soloud), it will produce actual sound.
-  void _synthesize({
-    required double frequency,
-    required double duration,
-    required double attack,
-    required double decay,
-    required Waveform waveform,
-    required double volume,
-    double pitchSweep = 0,
-  }) {
-    // Log the synthesis for debugging
-    debugPrint(
-      '[Synth] ${waveform.name} '
-      'freq=${frequency.toInt()}Hz '
-      'dur=${(duration * 1000).toInt()}ms '
-      'vol=${(volume * 100).toInt()}% '
-      '${pitchSweep != 0 ? "sweep=${pitchSweep.toInt()}Hz" : ""}',
-    );
-
-    // Generate PCM data (16-bit signed, mono, 44100Hz)
-    // This data is ready to be sent to any raw audio playback API
-    const sampleRate = 44100;
-    final numSamples = (duration * sampleRate).toInt();
-    final pcm = Int16List(numSamples);
-
-    for (int i = 0; i < numSamples; i++) {
-      final t = i / sampleRate;
-      final progress = t / duration;
-
-      // Frequency with optional pitch sweep
-      final freq = frequency + pitchSweep * progress;
-
-      // Generate waveform
-      double sample;
-      final phase = 2 * pi * freq * t;
-      switch (waveform) {
-        case Waveform.sine:
-          sample = sin(phase);
-        case Waveform.square:
-          sample = sin(phase) > 0 ? 1.0 : -1.0;
-        case Waveform.sawtooth:
-          sample = 2 * (freq * t - (freq * t).floor()) - 1;
-        case Waveform.noise:
-          sample = _rng.nextDouble() * 2 - 1;
+  void _safe(Object? Function() action) {
+    try {
+      final result = action();
+      if (result is Future) {
+        result.catchError((Object e) {
+          debugPrint('[Audio] $e');
+          return null;
+        });
       }
-
-      // ADSR envelope (simplified: attack + decay)
-      double envelope;
-      if (t < attack) {
-        envelope = t / attack;
-      } else {
-        final decayProgress = (t - attack) / decay;
-        envelope = (1.0 - decayProgress).clamp(0.0, 1.0);
-      }
-
-      pcm[i] = (sample * envelope * volume * 32767 * 0.5)
-          .clamp(-32767, 32767)
-          .toInt();
+    } catch (e) {
+      debugPrint('[Audio] $e');
     }
-
-    // TODO: Play pcm data through a raw audio output.
-    // When flutter_soloud is added, this becomes:
-    //   _soloud.play(AudioSource.fromPcm(pcm, sampleRate));
-    // For now, the synthesis runs but audio output depends on a raw player.
   }
 }
-
-// ===========================================================================
-// Sound Type Enums
-// ===========================================================================
 
 /// Waveform shapes for synthesis.
 enum Waveform { sine, square, sawtooth, noise }

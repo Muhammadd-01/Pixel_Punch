@@ -84,7 +84,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   void _complete() async {
     await context.read<LocalStorageService>().setOnboardingComplete();
-    if (mounted) context.go('/welcome');
+    if (mounted) context.go('/login');
   }
 
   @override

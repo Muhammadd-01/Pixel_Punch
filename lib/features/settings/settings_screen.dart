@@ -62,19 +62,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildSection('Audio', [
             _buildSwitchTile('Mute All Sounds', _isMuted, (v) {
               setState(() => _isMuted = v);
-              context.read<AudioService>().toggleMute();
+              context.read<AudioService>().setMuted(v);
+              _saveSetting('muted', v);
             }),
             _buildSliderTile('Master Volume', _masterVolume, (v) {
               setState(() => _masterVolume = v);
               context.read<AudioService>().setMasterVolume(v);
+              _saveSetting('master_volume', v);
             }),
             _buildSliderTile('Music Volume', _musicVolume, (v) {
               setState(() => _musicVolume = v);
               context.read<AudioService>().setMusicVolume(v);
+              _saveSetting('music_volume', v);
             }),
             _buildSliderTile('SFX Volume', _sfxVolume, (v) {
               setState(() => _sfxVolume = v);
               context.read<AudioService>().setSfxVolume(v);
+              _saveSetting('sfx_volume', v);
             }),
           ]),
           const SizedBox(height: 16),

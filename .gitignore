@@ -44,3 +44,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Unity exports for flutter_unity_widget (regenerate from Unity: Flutter → Export)
+/android/unityLibrary/
+/ios/UnityLibrary/

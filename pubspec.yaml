@@ -40,6 +40,9 @@ dependencies:
   image: ^4.12.0
   image_picker: ^1.2.2
   google_mlkit_face_detection: ^0.14.0
+  # Unity embedding. The _2 fork supports Unity 6 (UnityPlayer is no longer
+  # an Android View there, which breaks the original plugin).
+  flutter_unity_widget_2: ^6000.1.0
 
 dev_dependencies:
   flutter_test:
@@ -59,3 +62,6 @@ flutter:
     - assets/data/dialogue/
     - assets/data/abilities/
     - assets/branding/
+    - assets/audio/sfx/
+    - assets/audio/voice/
+    - assets/audio/music/
